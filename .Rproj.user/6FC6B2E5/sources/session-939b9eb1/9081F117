@@ -1,0 +1,26 @@
+{
+    "id": "9081F117",
+    "path": "~/truncpois/man/dot-check_lambda.Rd",
+    "project_path": "man/dot-check_lambda.Rd",
+    "type": "r_doc",
+    "hash": "1651249022",
+    "contents": "",
+    "dirty": false,
+    "created": 1774732824820.0,
+    "source_on_save": false,
+    "relative_order": 7,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1774732956,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1774732957005,
+    "read_only": true,
+    "read_only_alternatives": [
+        "R/utils.R"
+    ]
+}
