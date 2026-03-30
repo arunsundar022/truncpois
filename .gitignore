@@ -1,1 +1,46 @@
+# R session and history
+.Rhistory
+.RData
+.Ruserdata
+
+# RStudio
+.Rproj.user/
+*.Rproj
+
+# package build and check artifacts
+*.tar.gz
+*.Rcheck/
 inst/doc
+
+# vignettes outputs (generated files only)
+vignettes/*.html
+vignettes/*.pdf
+vignettes/*.utf8.R
+vignettes/*.utf8.md
+vignettes/.cache/
+
+# compiled objects
+*.o
+*.so
+*.dll
+*.dSYM/
+
+# project settings
+.Rbuildignore
+
+# OS and IDE artifacts
+.DS_Store
+Thumbs.db
+
+# packrat
+packrat/lib/
+packrat/local/
+
+# renv
+renv/library/
+renv/python/
+renv/staging/
+
+# logs
+*.log
+
