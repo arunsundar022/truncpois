@@ -2,26 +2,66 @@
 % Please edit documentation in R/truncpois.R
 \name{dtruncpois}
 \alias{dtruncpois}
-\title{Truncated Poisson density}
+\title{Truncated Poisson Density}
 \usage{
 dtruncpois(x, lambda, a = 0L, b = Inf, log = FALSE)
 }
 \arguments{
-\item{x}{Numeric vector of quantiles.}
+\item{x}{Vector of non-negative integers for which probabilities are computed.}
 
-\item{lambda}{Positive numeric scalar, the Poisson mean.}
+\item{lambda}{Positive numeric vector, the mean parameter of the Poisson distribution.}
 
-\item{a}{Lower truncation bound (inclusive). Default is \code{0}.}
+\item{a}{Lower truncation bound (inclusive). Default is \code{a = 0}.}
 
-\item{b}{Upper truncation bound (inclusive). Default is \code{Inf}.}
+\item{b}{Upper truncation bound (inclusive). Default is \code{b = Inf}.}
 
-\item{log}{Logical; if \code{TRUE}, return the log-density. Default is \code{FALSE}.}
+\item{log}{Logical; If \code{log = TRUE}, return log-density. Default is \code{log = FALSE}.}
 }
 \value{
-A numeric vector of (log-)densities the same length as \code{x}.
-  Values outside \code{(a, b]} are assigned density zero (or \code{-Inf} on
-  the log scale).
+A numeric vector of densities (or log-densities if \code{log = TRUE})
+of the same length as \code{x}. Values of \code{x} outside \code{[a,b]}
+return \code{0} or \code{-Inf} if \code{log = TRUE}.
 }
 \description{
-Compute the density of a truncated Poisson distribution.
+Compute the probability mass function (PMF) of a truncated poisson distribution
+}
+\details{
+With \code{a = 0} and \code{b = Inf} as defaults, the function behaves identically to
+\code{\link[stats]{dpois}}, corresponding to a non-truncated Poisson distribution.
+}
+\note{
+This implementation adapts the continuous truncated distribution framework of
+Nadarajah and Kotz (2006) to the discrete Poisson setting.
+Key differences include:
+\itemize{
+\item All internal calculations are performed on the log-scale for numerical stability
+\item The normalizing constant is computed as log-differnce of the cumulative probabilities
+rather than densities
+}
+}
+\examples{
+# Compare standard Poisson and right-truncated Poisson PMF
+x <- 0:15
+p_pois <- stats::dpois(x, lambda = 5)
+p_trunc <- dtruncpois(x, lambda = 5, b = 10)
+
+round(rbind(x, p_pois, p_trunc), 3)
+
+# Plotting the comparison
+barplot(rbind(p_pois, p_trunc), beside = TRUE, names.arg = x,
+        col = c("gray", "blue"),
+        main = "Standard vs Truncated Poisson PMF",
+        legend.text = c("Poisson(5)", "TruncPoisson(5, b=10)"))
+
+# Log-scale computation for large lambdas and wide bounds to prevent underflow
+dtruncpois(100, lambda = 100, a = 50, b = 150, log = TRUE)
+}
+\references{
+Nadarajah, S. and Kotz, S. (2006).
+\dQuote{R Programs for Computing Truncated Distributions}
+\emph{Journal of Statistical Software}
+\url{https://www.jstatsoft.org/v16/c02/}
+}
+\author{
+Arun Sundar Paulraj and Keefe Murphy
 }

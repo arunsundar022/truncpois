@@ -1,18 +1,16 @@
 Package: truncpois
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Truncated Poisson Distribution
 Version: 0.1.0
 Authors@R: c(
-    person(
-      "Arun", "Doe",
-      email = "jane@example.com",
-      role = c("aut", "cre")
-    )
+    person("Arun", "Sundar Paulraj", email = "arun.paulraj.2026@mumail.ie", role = c("aut", "cre")),
+    person("Keefe", "Murphy", email = "keefe.murphy@mu.ie", role = "aut")
   )
-YEAR: 2026
-COPYRIGHT HOLDER: Arun Sundar Paulraj
-Description: More about what it does (maybe more than one line).
-    Continuation lines should be indented.
+Date: 2026-04-05
+Description: Provides functions for the truncated Poisson distribution, including
+    density (dtruncpois), cumulative distribution function (ptruncpois),
+    quantile function (qtruncpois), and random generation (rtruncpois).
+    Also includes functions for mean (extruncpois) and variance (vartruncpois).
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
@@ -21,3 +19,4 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
+Roxygen: list(markdown = TRUE)

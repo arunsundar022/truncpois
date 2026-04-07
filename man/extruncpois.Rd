@@ -2,22 +2,60 @@
 % Please edit documentation in R/moments.R
 \name{extruncpois}
 \alias{extruncpois}
-\title{Truncated Poisson mean}
+\title{Truncated Poisson Mean}
 \usage{
 extruncpois(lambda, a = 0L, b = Inf)
 }
 \arguments{
-\item{lambda}{Positive numeric scalar, the Poisson mean.}
+\item{lambda}{Positive numeric scalar, the mean parameter of the Poisson distribution.}
 
-\item{a}{Lower truncation bound (inclusive). Default is \code{0}.}
+\item{a}{Lower truncation bound (inclusive). Default is \code{a = 0}.}
 
-\item{b}{Upper truncation bound (inclusive). Default is \code{Inf}.}
+\item{b}{Upper truncation bound (inclusive). Default is \code{b = Inf}.}
 }
 \value{
-A single positive numeric value.
+A single positive numeric value representing the expected value.
 }
 \description{
+Compute the expected value of a truncated poisson distribution
+}
+\details{
 Compute the expected value of a truncated Poisson distribution,
 \eqn{E[X \mid a < X \le b]}, evaluated in log-space for numerical
-stability.
+stability. With \code{a = 0} and \code{b = Inf} as defaults, the function returns
+the mean of a non-truncated Poisson distribution.
+}
+\note{
+This implementation adapts the continuous truncated distribution framework of
+Nadarajah and Kotz (2006) to the discrete Poisson setting.
+Key differences include:
+\itemize{
+\item All internal calculations are performed on the log-scale for numerical stability
+\item The normalizing constant is computed as log-differnce of the cumulative probabilities
+rather than densities
+}
+}
+\examples{
+# The mean of a zero-truncated Poisson distribution is strictly greater than lambda
+lambda_val <- 2
+extruncpois(lambda_val, a = 1) # > 2
+
+# Examine how the mean changes as the upper bound increases
+bounds <- 1:10
+means <- sapply(bounds, function(b) extruncpois(lambda = 5, a = 0, b = b))
+
+# Plot demonstrating convergence to the untruncated mean
+plot(bounds, means, type = "b", pch = 19, col = "blue",
+     ylab = "Expected Value", xlab = "Upper Bound (b)",
+     main = "Expected Value of Right-Truncated Poisson(lambda=5)")
+abline(h = 5, lty = 2, col = "red") # Untruncated mean
+}
+\references{
+Nadarajah, S. and Kotz, S. (2006).
+\dQuote{R Programs for Computing Truncated Distributions}
+\emph{Journal of Statistical Software}
+\url{https://www.jstatsoft.org/v16/c02/}
+}
+\author{
+Arun Sundar Paulraj and Keefe Murphy
 }
