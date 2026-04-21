@@ -3,7 +3,7 @@
 #' Compute the expected value of a truncated poisson distribution
 #'
 #' Compute the expected value of a truncated Poisson distribution,
-#' \eqn{E[X \mid a < X \le b]}, evaluated in log-space for numerical
+#' \eqn{E[X \mid a \le X \le b]}, evaluated in log-space for numerical
 #' stability. With \code{a = 0} and \code{b = Inf} as defaults, the function returns
 #' the mean of a non-truncated Poisson distribution.
 #'
@@ -51,20 +51,13 @@ extruncpois <- function(lambda, a = 0L, b = Inf) {
   .check_truncpois_bounds(a, b)
   .check_lambda(lambda)
 
-  if (a < 1L) {
-    # Use direct summation for robustness when a < 1
-    support <- seq(max(a, 0L), b)
-    probs <- dtruncpois(support, lambda, a, b, log = FALSE)
-    return(sum(support * probs))
-  } else {
-    a_adj <- a - 1L
-    log_denom <- .log_denom_truncpois(a_adj, b, lambda)
-    log_num <- .log_diff(
-      stats::ppois(b - 1L, lambda, log.p = TRUE, lower.tail = TRUE),
-      stats::ppois(a_adj - 1L, lambda, log.p = TRUE, lower.tail = TRUE)
-    )
-    return(exp(log(lambda) + log_num - log_denom))
-  }
+  a_adj <- a - 1L
+  log_denom <- .log_denom_truncpois(a_adj, b, lambda)
+  log_num <- .log_diff(
+    stats::ppois(b - 1L, lambda, log.p = TRUE, lower.tail = TRUE),
+    stats::ppois(a_adj - 1L, lambda, log.p = TRUE, lower.tail = TRUE)
+  )
+  return(exp(log(lambda) + log_num - log_denom))
 }
 
 #' Truncated Poisson Variance
@@ -72,9 +65,9 @@ extruncpois <- function(lambda, a = 0L, b = Inf) {
 #' Compute the variance of a truncated poisson distribution
 #'
 #' Compute the variance of a truncated Poisson distribution,
-#' \eqn{\text{Var}(X \mid a < X \le b)}, via the identity
+#' \eqn{\text{Var}(X \mid a \le X \le b)}, via the identity
 #' \eqn{E[X^2] - E[X]^2}. The second moment is obtained by expressing
-#' \eqn{E[X^2] = \lambda^2 \cdot P(a{+}2 < X \le b{+}2) / P(a < X \le b) + E[X]},
+#' \eqn{E[X^2] = \lambda^2 \cdot P(a{-}2 \le X \le b{-}2) / P(a \le X \le b) + E[X]},
 #' keeping all CDF evaluations on the log scale. With \code{a = 0} and
 #' \code{b = Inf} as defaults, the function returns the variance of a
 #' non-truncated Poisson distribution.
@@ -125,23 +118,14 @@ vartruncpois <- function(lambda, a = 0L, b = Inf) {
   .check_truncpois_bounds(a, b)
   .check_lambda(lambda)
 
-  if (a < 2L) {
-    # Use direct summation for robustness when a < 2
-    support <- seq(max(a, 0L), b)
-    probs <- dtruncpois(support, lambda, a, b, log = FALSE)
-    mu <- sum(support * probs)
-    ex2 <- sum(support^2 * probs)
-    return(ex2 - mu^2)
-  } else {
-    a_adj <- a - 1L
-    log_denom <- .log_denom_truncpois(a_adj, b, lambda)
-    mu <- extruncpois(lambda, a, b)
-    log_fac_num <- .log_diff(
-      stats::ppois(b - 2L, lambda, log.p = TRUE, lower.tail = TRUE),
-      stats::ppois(a_adj - 2L, lambda, log.p = TRUE, lower.tail = TRUE)
-    )
+  a_adj <- a - 1L
+  log_denom <- .log_denom_truncpois(a_adj, b, lambda)
+  mu <- extruncpois(lambda, a, b)
+  log_fac_num <- .log_diff(
+    stats::ppois(b - 2L, lambda, log.p = TRUE, lower.tail = TRUE),
+    stats::ppois(a_adj - 2L, lambda, log.p = TRUE, lower.tail = TRUE)
+  )
 
-    ex2 <- exp(2 * log(lambda) + log_fac_num - log_denom) + mu
-    return(ex2 - mu^2)
-  }
+  ex2 <- exp(2 * log(lambda) + log_fac_num - log_denom) + mu
+  return(ex2 - mu^2)
 }

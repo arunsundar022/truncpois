@@ -7,47 +7,125 @@
 
 <!-- badges: end -->
 
-The goal of truncpois is to …
+## Truncated Poisson Distribution Functions
+
+### Written by Arun Sundar Paulraj and Keefe Murphy
+
+## Description
+
+`truncpois` provides a complete suite of distribution functions for the
+truncated Poisson distribution, supporting both left-truncation,
+right-truncation, and doubly truncated forms. Truncation bounds are
+interpreted as `a <= X <= b`. All core computations are carried out on
+the log scale for numerical stability, making the package reliable
+across a wide range of rate parameters and truncation configurations.
+
+The most important functions in the **truncpois** package are:
+`dtruncpois`, for computing the probability mass function; `ptruncpois`,
+for the cumulative distribution function; `qtruncpois`, for quantiles;
+and `rtruncpois`, for generating random samples via inverse-CDF or
+bounded rejection sampling. Distributional moments are provided by
+`extruncpois` and `vartruncpois` for the theoretical mean and variance
+respectively.
 
 ## Installation
 
-You can install the development version of truncpois from
-[GitHub](https://github.com/) with:
+You can install the latest stable official release of `truncpois` from
+CRAN:
+
+``` r
+install.packages("truncpois")
+```
+
+or the development version from GitHub:
 
 ``` r
 # install.packages("pak")
 pak::pak("arunsundar022/truncpois")
 ```
 
-## Example
-
-This is a basic example which shows you how to solve a common problem:
+In either case, you can then explore the package with:
 
 ``` r
 library(truncpois)
-## basic example code
+help(dtruncpois)  # Help on the core density function
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`?
-You can include R chunks like so:
+For a more thorough introduction, a vignette document is available as
+follows:
 
 ``` r
-summary(cars)
-#>      speed           dist       
-#>  Min.   : 4.0   Min.   :  2.00  
-#>  1st Qu.:12.0   1st Qu.: 26.00  
-#>  Median :15.0   Median : 36.00  
-#>  Mean   :15.4   Mean   : 42.98  
-#>  3rd Qu.:19.0   3rd Qu.: 56.00  
-#>  Max.   :25.0   Max.   :120.00
+vignette("truncpois", package = "truncpois")
 ```
 
-You’ll still need to render `README.Rmd` regularly, to keep `README.md`
-up-to-date. `devtools::build_readme()` is handy for this.
+However, if the package is installed from GitHub, the vignette is not
+automatically built. It can be included when installing from GitHub
+with:
 
-You can also embed plots, for example:
+``` r
+devtools::install_github("arunsundar022/truncpois", build_vignettes = TRUE)
+```
 
-<img src="man/figures/README-pressure-1.png" width="100%" />
+Alternatively, the vignette is available on the package’s CRAN page.
 
-In that case, don’t forget to commit and push the resulting figure
-files, so they display on GitHub and CRAN.
+## Quick Example
+
+``` r
+library(truncpois)
+set.seed(123)
+```
+
+Compare the standard Poisson and right-truncated Poisson PMFs:
+
+``` r
+x <- 0:12
+p_pois  <- dpois(x, lambda = 5)
+p_trunc <- dtruncpois(x, lambda = 5, a = 0, b = 8)
+
+round(data.frame(x = x, p_pois = p_pois, p_trunc = p_trunc), 4)
+#>     x p_pois p_trunc
+#> 1   0 0.0067  0.0072
+#> 2   1 0.0337  0.0362
+#> 3   2 0.0842  0.0904
+#> 4   3 0.1404  0.1506
+#> 5   4 0.1755  0.1883
+#> 6   5 0.1755  0.1883
+#> 7   6 0.1462  0.1569
+#> 8   7 0.1044  0.1121
+#> 9   8 0.0653  0.0700
+#> 10  9 0.0363  0.0000
+#> 11 10 0.0181  0.0000
+#> 12 11 0.0082  0.0000
+#> 13 12 0.0034  0.0000
+```
+
+Generate random draws from a doubly truncated Poisson distribution:
+
+``` r
+samples <- rtruncpois(1000, lambda = 4, a = 2, b = 9, method = "bounded")
+table(samples)
+#> samples
+#>   2   3   4   5   6   7   8   9 
+#> 171 211 223 171 111  62  36  15
+```
+
+Compare empirical and theoretical moments:
+
+``` r
+c(empirical_mean    = mean(samples),
+  theoretical_mean  = extruncpois(4, a = 2, b = 9))
+#>   empirical_mean theoretical_mean 
+#>          4.24500          4.26672
+
+c(empirical_var     = var(samples),
+  theoretical_var   = vartruncpois(4, a = 2, b = 9))
+#>   empirical_var theoretical_var 
+#>        2.961937        2.925129
+```
+
+## References
+
+Nadarajah, S. and Kotz, S. (2006). R programs for truncated
+distributions. *Journal of Statistical Software, Code Snippets*, 16(2),
+1–8.
+\<[doi:10.18637/jss.v016.c02](https://doi.org/10.18637/jss.v016.c02)\>

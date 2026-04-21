@@ -21,7 +21,7 @@ Compute the expected value of a truncated poisson distribution
 }
 \details{
 Compute the expected value of a truncated Poisson distribution,
-\eqn{E[X \mid a < X \le b]}, evaluated in log-space for numerical
+\eqn{E[X \mid a \le X \le b]}, evaluated in log-space for numerical
 stability. With \code{a = 0} and \code{b = Inf} as defaults, the function returns
 the mean of a non-truncated Poisson distribution.
 }

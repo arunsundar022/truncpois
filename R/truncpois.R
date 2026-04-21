@@ -347,9 +347,14 @@ rtruncpois <- function(n, lambda, a = 0L, b = Inf,
          },
 
          bounded = {
-           pa <- stats::ppois(a - 1L, lambda, lower.tail = TRUE, log.p = FALSE)
-           pb <- stats::ppois(b,      lambda, lower.tail = TRUE, log.p = FALSE)
-           x  <- stats::qpois(stats::runif(n, pa, pb), lambda, lower.tail = TRUE)
+           lpa <- stats::ppois(a - 1L, lambda, lower.tail = TRUE, log.p = TRUE)
+           lpb <- stats::ppois(b,      lambda, lower.tail = TRUE, log.p = TRUE)
+           if (is.finite(lpa)) {
+             log_u <- lpa + log1p(expm1(lpb - lpa) * stats::runif(n, 0, 1))
+           } else {
+             log_u <- lpb + log(stats::runif(n))
+           }
+           x <- stats::qpois(log_u, lambda, lower.tail = TRUE, log.p = TRUE)
          },
 
          direct = {
@@ -357,14 +362,13 @@ rtruncpois <- function(n, lambda, a = 0L, b = Inf,
                                lower.tail = TRUE,  log.p = FALSE)
            qhi <- stats::qpois(.Machine$double.eps, lambda,
                                lower.tail = FALSE, log.p = FALSE)
-           a   <- max(a, qlo)
-           b   <- min(b, qhi)
-           if (!is.finite(a) || !is.finite(b))
+           a_eff   <- max(a, qlo)
+           b_eff   <- min(b, qhi)
+           if (!is.finite(a_eff) || !is.finite(b_eff))
              stop("Infinite support: try another 'method'", call. = FALSE)
-           support <- seq(ceiling(a), floor(b), by = 1L)
-           prob    <- dtruncpois(support, lambda, a, b, log = FALSE)
-           x       <- support[sample(length(support), size = n,
-                                     prob = prob, replace = TRUE)]
+           support <- seq(ceiling(a_eff), floor(b_eff), by = 1L)
+           prob    <- dtruncpois(support, lambda, a, b, log = TRUE)
+           x       <- support[.gumbel_max(prob, n)]
          }
   )
   return(x)

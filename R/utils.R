@@ -38,3 +38,9 @@
     stats::ppois(a, lambda, log.p = TRUE, lower.tail = TRUE)
   )
 }
+
+.gumbel_max <- function(lprobs, n = 1) {
+  gumbel <- matrix(log(stats::rexp(n * length(lprobs), 1)), nrow = n)
+  lprobs <- sweep(-gumbel, 2, lprobs, FUN = "+", check.margin = FALSE)
+  return(max.col(lprobs, ties.method = "first"))
+}

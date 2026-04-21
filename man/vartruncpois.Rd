@@ -21,9 +21,9 @@ Compute the variance of a truncated poisson distribution
 }
 \details{
 Compute the variance of a truncated Poisson distribution,
-\eqn{\text{Var}(X \mid a < X \le b)}, via the identity
+\eqn{\text{Var}(X \mid a \le X \le b)}, via the identity
 \eqn{E[X^2] - E[X]^2}. The second moment is obtained by expressing
-\eqn{E[X^2] = \lambda^2 \cdot P(a{+}2 < X \le b{+}2) / P(a < X \le b) + E[X]},
+\eqn{E[X^2] = \lambda^2 \cdot P(a{-}2 \le X \le b{-}2) / P(a \le X \le b) + E[X]},
 keeping all CDF evaluations on the log scale. With \code{a = 0} and
 \code{b = Inf} as defaults, the function returns the variance of a
 non-truncated Poisson distribution.

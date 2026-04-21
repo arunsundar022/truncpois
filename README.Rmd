@@ -16,40 +16,91 @@ knitr::opts_chunk$set(
 # truncpois
 
 <!-- badges: start -->
+
 <!-- badges: end -->
 
-The goal of truncpois is to ...
+## Truncated Poisson Distribution Functions
+
+### Written by Arun Sundar Paulraj and Keefe Murphy
+
+## Description
+
+`truncpois` provides a complete suite of distribution functions for the truncated Poisson distribution, supporting both left-truncation, right-truncation, and doubly truncated forms. Truncation bounds are interpreted as `a <= X <= b`. All core computations are carried out on the log scale for numerical stability, making the package reliable across a wide range of rate parameters and truncation configurations.
+
+The most important functions in the __truncpois__ package are: `dtruncpois`, for computing the probability mass function; `ptruncpois`, for the cumulative distribution function; `qtruncpois`, for quantiles; and `rtruncpois`, for generating random samples via inverse-CDF or bounded rejection sampling. Distributional moments are provided by `extruncpois` and `vartruncpois` for the theoretical mean and variance respectively.
 
 ## Installation
 
-You can install the development version of truncpois from [GitHub](https://github.com/) with:
+You can install the latest stable official release of `truncpois` from CRAN:
 
-``` r
+```r
+install.packages("truncpois")
+```
+
+or the development version from GitHub:
+
+```r
 # install.packages("pak")
 pak::pak("arunsundar022/truncpois")
 ```
 
-## Example
+In either case, you can then explore the package with:
 
-This is a basic example which shows you how to solve a common problem:
-
-```{r example}
+```r
 library(truncpois)
-## basic example code
+help(dtruncpois)  # Help on the core density function
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
+For a more thorough introduction, a vignette document is available as follows:
 
-```{r cars}
-summary(cars)
+```r
+vignette("truncpois", package = "truncpois")
 ```
 
-You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date. `devtools::build_readme()` is handy for this.
+However, if the package is installed from GitHub, the vignette is not automatically built. It can be included when installing from GitHub with:
 
-You can also embed plots, for example:
-
-```{r pressure, echo = FALSE}
-plot(pressure)
+```r
+devtools::install_github("arunsundar022/truncpois", build_vignettes = TRUE)
 ```
 
-In that case, don't forget to commit and push the resulting figure files, so they display on GitHub and CRAN.
+Alternatively, the vignette is available on the package's CRAN page.
+
+## Quick Example
+
+```{r library}
+library(truncpois)
+set.seed(123)
+```
+
+Compare the standard Poisson and right-truncated Poisson PMFs:
+
+```{r pmf-compare}
+x <- 0:12
+p_pois  <- dpois(x, lambda = 5)
+p_trunc <- dtruncpois(x, lambda = 5, a = 0, b = 8)
+
+round(data.frame(x = x, p_pois = p_pois, p_trunc = p_trunc), 4)
+```
+
+Generate random draws from a doubly truncated Poisson distribution:
+
+```{r rtruncpois}
+samples <- rtruncpois(1000, lambda = 4, a = 2, b = 9, method = "bounded")
+table(samples)
+```
+
+Compare empirical and theoretical moments:
+
+```{r moments}
+c(empirical_mean    = mean(samples),
+  theoretical_mean  = extruncpois(4, a = 2, b = 9))
+
+c(empirical_var     = var(samples),
+  theoretical_var   = vartruncpois(4, a = 2, b = 9))
+```
+
+## References
+
+Nadarajah, S. and Kotz, S. (2006). R programs for truncated distributions.
+_Journal of Statistical Software, Code Snippets_, 16(2), 1--8.
+<[doi:10.18637/jss.v016.c02](https://doi.org/10.18637/jss.v016.c02)>
