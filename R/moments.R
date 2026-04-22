@@ -51,13 +51,22 @@ extruncpois <- function(lambda, a = 0L, b = Inf) {
   .check_truncpois_bounds(a, b)
   .check_lambda(lambda)
 
-  a_adj <- a - 1L
-  log_denom <- .log_denom_truncpois(a_adj, b, lambda)
-  log_num <- .log_diff(
-    stats::ppois(b - 1L, lambda, log.p = TRUE, lower.tail = TRUE),
-    stats::ppois(a_adj - 1L, lambda, log.p = TRUE, lower.tail = TRUE)
-  )
-  return(exp(log(lambda) + log_num - log_denom))
+  if (a < 1L) {
+    qlo <- stats::qpois(.Machine$double.eps, lambda, lower.tail = TRUE,  log.p = FALSE)
+    qhi <- stats::qpois(.Machine$double.eps, lambda, lower.tail = FALSE, log.p = FALSE)
+    support <- seq(max(floor(a), qlo), min(floor(b), qhi))
+    probs <- dtruncpois(support, lambda, a, b, log = TRUE)
+    w <- exp(probs - max(probs))
+    return(sum(support * w) / sum(w))
+  } else {
+    a_adj <- a - 1L
+    log_denom <- .log_denom_truncpois(a_adj, b, lambda)
+    log_num <- .log_diff(
+      stats::ppois(b - 1L, lambda, log.p = TRUE, lower.tail = TRUE),
+      stats::ppois(a_adj - 1L, lambda, log.p = TRUE, lower.tail = TRUE)
+    )
+    return(exp(log(lambda) + log_num - log_denom))
+  }
 }
 
 #' Truncated Poisson Variance
@@ -118,14 +127,25 @@ vartruncpois <- function(lambda, a = 0L, b = Inf) {
   .check_truncpois_bounds(a, b)
   .check_lambda(lambda)
 
-  a_adj <- a - 1L
-  log_denom <- .log_denom_truncpois(a_adj, b, lambda)
-  mu <- extruncpois(lambda, a, b)
-  log_fac_num <- .log_diff(
-    stats::ppois(b - 2L, lambda, log.p = TRUE, lower.tail = TRUE),
-    stats::ppois(a_adj - 2L, lambda, log.p = TRUE, lower.tail = TRUE)
-  )
+  if (a < 2L) {
+    qlo <- stats::qpois(.Machine$double.eps, lambda, lower.tail = TRUE,  log.p = FALSE)
+    qhi <- stats::qpois(.Machine$double.eps, lambda, lower.tail = FALSE, log.p = FALSE)
+    support <- seq(max(floor(a), qlo), min(floor(b), qhi))
+    probs <- dtruncpois(support, lambda, a, b, log = TRUE)
+    w <- exp(probs - max(probs))
+    mu <- sum(support * w) / sum(w)
+    ex2 <- sum((support^2) * w) / sum(w)
+    return(ex2 - mu^2)
+  } else {
+    a_adj <- a - 1L
+    log_denom <- .log_denom_truncpois(a_adj, b, lambda)
+    mu <- extruncpois(lambda, a, b)
+    log_fac_num <- .log_diff(
+      stats::ppois(b - 2L, lambda, log.p = TRUE, lower.tail = TRUE),
+      stats::ppois(a_adj - 2L, lambda, log.p = TRUE, lower.tail = TRUE)
+    )
 
-  ex2 <- exp(2 * log(lambda) + log_fac_num - log_denom) + mu
-  return(ex2 - mu^2)
+    ex2 <- exp(2 * log(lambda) + log_fac_num - log_denom) + mu
+    return(ex2 - mu^2)
+  }
 }
