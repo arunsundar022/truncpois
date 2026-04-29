@@ -2,7 +2,7 @@
 % Please edit documentation in R/truncpois.R
 \name{rtruncpois}
 \alias{rtruncpois}
-\title{Truncated Poisson random sampling}
+\title{Truncated Poisson Random Generation}
 \usage{
 rtruncpois(
   n,
@@ -13,30 +13,70 @@ rtruncpois(
 )
 }
 \arguments{
-\item{n}{Non-negative integer scalar; the number of samples to draw.}
+\item{n}{Number of random values to return.}
 
-\item{lambda}{Positive numeric scalar, the Poisson mean.}
+\item{lambda}{Positive numeric scalar, the mean parameter of the Poisson distribution.}
 
-\item{a}{Lower truncation bound (inclusive). Default is \code{0}.}
+\item{a}{Lower truncation bound (inclusive). Default is \code{a = 0}.}
 
-\item{b}{Upper truncation bound (inclusive). Default is \code{Inf}.}
+\item{b}{Upper truncation bound (inclusive). Default is \code{b = Inf}.}
 
 \item{method}{Character string specifying the sampling algorithm. One of:
 \describe{
-  \item{\code{"direct"}}{Enumerate the support and sample via
-    \code{\link[base]{sample}()}. Fast when the support is small, but
-    fails for infinite or very wide supports.}
-  \item{\code{"inversion"}}{Inversion sampling via \code{qtruncpois()}.
-    Works for any finite \code{lambda} regardless of support width.}
-  \item{\code{"bounded"}}{Uniform-CDF inversion through the untruncated
-    Poisson CDF. Efficient when the truncation region covers most of the
-    probability mass.}
+\item{\code{"direct"}}{Enumerate the support and sample via
+\code{\link[base]{sample}()}. Fast when the support is small, but
+fails for infinite or very wide supports.}
+\item{\code{"inversion"}}{Inversion sampling via \code{qtruncpois()}.
+Works for any finite \code{lambda} regardless of support width.}
+\item{\code{"bounded"}}{Uniform-CDF inversion through the untruncated
+Poisson CDF. Efficient when the truncation region covers most of the
+probability mass.}
 }
 Default is \code{"direct"}.}
 }
 \value{
-An integer vector of length \code{n}.
+A numeric vector of random deviates of length \code{n}.
 }
 \description{
-Draw random samples from a truncated Poisson distribution.
+Draw random samples from a truncated poisson distribution
+}
+\details{
+With \code{a = 0} and \code{b = Inf} as defaults, the function behaves identically to
+\code{\link[stats]{rpois}}, corresponding to a non-truncated Poisson distribution.
+}
+\note{
+This implementation adapts the continuous truncated distribution framework of
+Nadarajah and Kotz (2006) to the discrete Poisson setting.
+Key differences include:
+\itemize{
+\item All internal calculations are performed on the log-scale for numerical stability
+\item The normalizing constant is computed as log-differnce of the cumulative probabilities
+rather than densities
+}
+}
+\examples{
+# Generate random samples from a zero-truncated Poisson distribution (ZTP)
+# ZTP is commonly used in count data models where zero is not observable
+set.seed(123)
+samples <- rtruncpois(1000, lambda = 2.5, a = 1)
+table(samples)
+
+# Compare sample mean with the theoretical mean
+mean(samples)
+extruncpois(lambda = 2.5, a = 1)
+
+# Efficiently sample from a heavily truncated distribution using inversion
+rtruncpois(10, lambda = 100, a = 90, b = 110, method = "inversion")
+
+# Use bounded method when truncation bounds enclose most of the probability mass
+rtruncpois(10, lambda = 50, a = 40, b = 60, method = "bounded")
+}
+\references{
+Nadarajah, S. and Kotz, S. (2006).
+\dQuote{R Programs for Computing Truncated Distributions}
+\emph{Journal of Statistical Software}
+\url{https://www.jstatsoft.org/v16/c02/}
+}
+\author{
+Arun Sundar Paulraj and Keefe Murphy
 }
