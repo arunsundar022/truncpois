@@ -11,6 +11,9 @@ knitr::opts_chunk$set(
   fig.path = "man/figures/README-",
   out.width = "100%"
 )
+
+# Load the package for examples
+devtools::load_all()
 ```
 
 # truncpois
@@ -27,7 +30,7 @@ knitr::opts_chunk$set(
 
 `truncpois` provides a complete suite of distribution functions for the truncated Poisson distribution, supporting both left-truncation, right-truncation, and doubly truncated forms. Truncation bounds are interpreted as `a <= X <= b`. All core computations are carried out on the log scale for numerical stability, making the package reliable across a wide range of rate parameters and truncation configurations.
 
-The most important functions in the __truncpois__ package are: `dtruncpois`, for computing the probability mass function; `ptruncpois`, for the cumulative distribution function; `qtruncpois`, for quantiles; and `rtruncpois`, for generating random samples via inverse-CDF or bounded rejection sampling. Distributional moments are provided by `extruncpois` and `vartruncpois` for the theoretical mean and variance respectively.
+The most important functions in the __truncpois__ package are: `dtruncpois`, for computing the probability mass function; `ptruncpois`, for the cumulative distribution function; `qtruncpois`, for quantiles; and `rtruncpois`, for generating random samples via inverse-CDF or bounded rejection sampling. Distributional moments are provided by `extruncpois` for the theoretical mean, `vartruncpois` for variance, `mtruncpois` for the median, and `mode_truncpois` for the mode.
 
 ## Installation
 
@@ -67,8 +70,7 @@ Alternatively, the vignette is available on the package's CRAN page.
 
 ## Quick Example
 
-```{r library}
-library(truncpois)
+```{r setup}
 set.seed(123)
 ```
 
@@ -97,6 +99,19 @@ c(empirical_mean    = mean(samples),
 
 c(empirical_var     = var(samples),
   theoretical_var   = vartruncpois(4, a = 2, b = 9))
+```
+
+Compute median and mode of truncated distributions:
+
+```{r median-mode}
+# Median of a doubly truncated Poisson
+mtruncpois(lambda = 4, a = 2, b = 9)
+
+# Mode of a doubly truncated Poisson (may return multiple values)
+mode_truncpois(lambda = 4, a = 2, b = 9)
+
+# Mode with potential ties (lambda between two integers)
+mode_truncpois(lambda = 2.5, a = 0, b = 10)
 ```
 
 ## References

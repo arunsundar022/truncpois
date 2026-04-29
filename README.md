@@ -25,8 +25,8 @@ The most important functions in the **truncpois** package are:
 for the cumulative distribution function; `qtruncpois`, for quantiles;
 and `rtruncpois`, for generating random samples via inverse-CDF or
 bounded rejection sampling. Distributional moments are provided by
-`extruncpois` and `vartruncpois` for the theoretical mean and variance
-respectively.
+`extruncpois` for the theoretical mean, `vartruncpois` for variance,
+`mtruncpois` for the median, and `mode_truncpois` for the mode.
 
 ## Installation
 
@@ -71,7 +71,6 @@ Alternatively, the vignette is available on the package’s CRAN page.
 ## Quick Example
 
 ``` r
-library(truncpois)
 set.seed(123)
 ```
 
@@ -121,6 +120,22 @@ c(empirical_var     = var(samples),
   theoretical_var   = vartruncpois(4, a = 2, b = 9))
 #>   empirical_var theoretical_var 
 #>        2.961937        2.925129
+```
+
+Compute median and mode of truncated distributions:
+
+``` r
+# Median of a doubly truncated Poisson
+mtruncpois(lambda = 4, a = 2, b = 9)
+#> [1] 4
+
+# Mode of a doubly truncated Poisson (may return multiple values)
+mode_truncpois(lambda = 4, a = 2, b = 9)
+#> [1] 3 4
+
+# Mode with potential ties (lambda between two integers)
+mode_truncpois(lambda = 2.5, a = 0, b = 10)
+#> [1] 2
 ```
 
 ## References

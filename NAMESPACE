@@ -2,6 +2,8 @@
 
 export(dtruncpois)
 export(extruncpois)
+export(mode_truncpois)
+export(mtruncpois)
 export(ptruncpois)
 export(qtruncpois)
 export(rtruncpois)
