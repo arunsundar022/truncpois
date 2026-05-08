@@ -15,7 +15,7 @@ mode_truncpois(lambda, a = 0L, b = Inf)
 }
 \value{
 An integer vector representing all modes in the truncated region.
-When multiple modes exist after truncation, all are returned.
+When multiple modes exist after truncation, all are returned and a warning is issued.
 }
 \description{
 Compute the mode of a truncated Poisson distribution
@@ -29,20 +29,21 @@ the mode is returned as the values clamped to the truncation bounds:
 that fall within the truncation region.
 }
 \note{
-This function uses the closed-form mode formula for the discrete Poisson distribution,
-accounting for potential ties when \eqn{\lambda} is close to an integer.
-When \code{lambda < 1}, the untruncated modes are 0, which is also returned
-(assuming \code{a <= 0}).
+This function uses the closed-form mode formula for the discrete Poisson distribution.
+When \eqn{\lambda} is a positive integer, both \eqn{\lambda - 1} and \eqn{\lambda} are
+equally probable modes (tied). When \eqn{\lambda} is non-integer, the unique mode is
+\eqn{\lfloor\lambda\rfloor}. When ties exist, a warning is issued and all tied values are
+returned. When \code{lambda < 1}, the untruncated mode is 0 (assuming \code{a <= 0}).
 }
 \examples{
-# Mode of a standard truncated Poisson
-mode_truncpois(lambda = 5, a = 0, b = 10)
-
-# Mode with potential tie (lambda between two integers)
+# Non-integer lambda: unique mode at floor(lambda), no warning
 mode_truncpois(lambda = 2.5, a = 0, b = 10)
 
-# Mode of a zero-truncated Poisson
-mode_truncpois(lambda = 3, a = 1)
+# Integer lambda: tied modes at lambda-1 and lambda, warning issued
+suppressWarnings(mode_truncpois(lambda = 5, a = 0, b = 10))
+
+# Mode of a zero-truncated Poisson with integer lambda
+suppressWarnings(mode_truncpois(lambda = 3, a = 1))
 }
 \references{
 Nadarajah, S. and Kotz, S. (2006).

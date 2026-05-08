@@ -1,19 +1,259 @@
 ---
-title: "truncpois"
+title: "truncpois: Truncated Poisson Distribution"
+author: "Arun Sundar Paulraj and Keefe Murphy"
+date: "`r Sys.Date()`"
+urlcolor: blue
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{truncpois}
+  %\VignetteIndexEntry{Introduction to the truncpois Package}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
+  fig.width  = 7,
+  fig.height = 5,
+  fig.align  = "center",
+  fig.show   = "hold",
+  collapse   = TRUE,
+  comment    = "#>",
+  warning    = FALSE,
+  message    = FALSE
 )
 ```
 
-```{r setup}
+## Introduction
+
+The **truncated Poisson distribution** arises when count observations are restricted to a subset of the non-negative integers. Two common cases are the _zero-truncated_ Poisson (counts of at least 1, as in species abundance studies or insurance claims), and the _doubly-truncated_ Poisson (counts confined to an interval $[a, b]$, as in bounded measurement processes).
+
+The __truncpois__ package provides a complete suite of functions for the truncated Poisson distribution, following the naming convention of base R's distribution functions:
+
+| Function | Description |
+|---|---|
+| `dtruncpois()` | Probability mass function (PMF) |
+| `ptruncpois()` | Cumulative distribution function (CDF) |
+| `qtruncpois()` | Quantile function (inverse CDF) |
+| `rtruncpois()` | Random sample generation |
+| `extruncpois()` | Expected value (mean) |
+| `vartruncpois()` | Variance |
+| `mtruncpois()` | Median |
+| `mode_truncpois()` | Mode |
+
+All functions accept `a` (lower truncation bound, inclusive, default `0`) and `b` (upper truncation bound, inclusive, default `Inf`). All internal computations are performed on the log-scale for numerical stability, following the framework of Nadarajah and Kotz (2006).
+
+### Installation
+
+```{r install, eval=FALSE}
+# Install from CRAN
+install.packages("truncpois")
+
+# Or install the development version from GitHub
+# install.packages("remotes")
+remotes::install_github("arunsundar022/truncpois")
+```
+
+```{r load}
 library(truncpois)
 ```
+
+---
+
+## Distribution Functions
+
+### Probability Mass Function
+
+`dtruncpois(x, lambda, a, b)` evaluates the PMF at integer values `x`. With default bounds (`a = 0`, `b = Inf`) it reduces to the standard `dpois()`.
+
+```{r pmf-table}
+x          <- 0:12
+p_pois     <- stats::dpois(x, lambda = 5)
+p_trunc    <- dtruncpois(x, lambda = 5, a = 2, b = 10)
+
+round(rbind(x = x, Poisson = p_pois, Truncated = p_trunc), 4)
+```
+
+Notice that `dtruncpois` returns 0 for $x < a = 2$ and $x > b = 10$, and the remaining probabilities are rescaled to sum to 1.
+
+```{r pmf-plot, fig.height=4.5}
+barplot(
+  rbind(Poisson = p_pois, Truncated = p_trunc),
+  beside    = TRUE,
+  names.arg = x,
+  col       = c("grey70", "steelblue"),
+  ylab      = "Probability",
+  xlab      = "x",
+  main      = expression("PMF: Poisson(5) vs TruncPois(5, a=2, b=10)"),
+  legend.text = c("Poisson(5)", "TruncPois(5, a=2, b=10)")
+)
+```
+
+The `log = TRUE` argument returns log-probabilities for numerical work involving very large $\lambda$ or wide truncation windows:
+
+```{r pmf-log}
+dtruncpois(100, lambda = 100, a = 50, b = 150, log = TRUE)
+```
+
+### Cumulative Distribution Function
+
+`ptruncpois(q, lambda, a, b)` computes $P(X \leq q \mid a \leq X \leq b)$. The CDF reaches exactly 1 at the upper bound $b$ and is 0 for $q < a$.
+
+```{r cdf-table}
+q          <- 0:12
+cdf_pois   <- stats::ppois(q, lambda = 5)
+cdf_trunc  <- ptruncpois(q, lambda = 5, a = 2, b = 10)
+
+round(rbind(q = q, Poisson = cdf_pois, Truncated = cdf_trunc), 4)
+```
+
+```{r cdf-plot, fig.height=4.5}
+plot(q, cdf_trunc, type = "s", col = "steelblue", lwd = 2,
+     ylim = c(0, 1), ylab = "Cumulative Probability", xlab = "q",
+     main = "CDF: Poisson(5) vs TruncPois(5, a=2, b=10)")
+lines(q, cdf_pois, type = "s", col = "grey50", lwd = 2, lty = 2)
+legend("bottomright",
+       legend = c("TruncPois(5, a=2, b=10)", "Poisson(5)"),
+       col = c("steelblue", "grey50"), lwd = 2, lty = c(1, 2), bty = "n")
+```
+
+The `lower.tail` and `log.p` arguments mirror the conventions of `ppois()`:
+
+```{r cdf-uppertail}
+# Upper-tail probability P(X > 7 | 2 <= X <= 10)
+ptruncpois(7, lambda = 5, a = 2, b = 10, lower.tail = FALSE)
+```
+
+### Quantile Function
+
+`qtruncpois(p, lambda, a, b)` is the right-continuous inverse of the CDF: the smallest integer $x$ in $[a, b]$ with $P(X \leq x) \geq p$.
+
+```{r quantile}
+p <- seq(0.1, 0.9, by = 0.2)
+q <- qtruncpois(p, lambda = 5, a = 2, b = 10)
+rbind(p = p, q = q)
+```
+
+We can verify the round-trip property — the CDF evaluated at the returned quantiles should be $\geq$ the target probabilities:
+
+```{r quantile-roundtrip}
+cdf_at_q <- ptruncpois(q, lambda = 5, a = 2, b = 10)
+rbind(target_p = p, quantile = q, cdf_at_q = round(cdf_at_q, 4))
+```
+
+---
+
+## Random Generation
+
+`rtruncpois(n, lambda, a, b, method)` draws $n$ independent samples from the truncated Poisson. Three sampling algorithms are available:
+
+- **`"direct"`** (default): Enumerates the support and samples via the Gumbel-max trick. Fast when the support is small or moderate.
+- **`"inversion"`**: Inversion sampling via `qtruncpois()`. Works for any parameter configuration.
+- **`"bounded"`**: CDF-inversion through the untruncated Poisson. Efficient when truncation removes little probability mass.
+
+```{r random-gen}
+set.seed(2026)
+x_direct    <- rtruncpois(1000, lambda = 3, a = 1, b = Inf, method = "direct")
+x_inversion <- rtruncpois(1000, lambda = 3, a = 1, b = Inf, method = "inversion")
+x_bounded   <- rtruncpois(1000, lambda = 3, a = 1, b = Inf, method = "bounded")
+```
+
+All three methods produce samples entirely within $[a, b]$ and converge to the same distribution:
+
+```{r random-compare}
+cat("Method       Min  Max  Mean\n")
+cat(sprintf("direct      %3d  %3d  %.3f\n", min(x_direct),    max(x_direct),    mean(x_direct)))
+cat(sprintf("inversion   %3d  %3d  %.3f\n", min(x_inversion), max(x_inversion), mean(x_inversion)))
+cat(sprintf("bounded     %3d  %3d  %.3f\n", min(x_bounded),   max(x_bounded),   mean(x_bounded)))
+cat(sprintf("Theoretical  --   --  %.3f\n", extruncpois(3, a = 1)))
+```
+
+For a heavily truncated distribution where the support is wide, use `method = "inversion"` to avoid the finite-support requirement of `"direct"`:
+
+```{r random-large-lambda}
+set.seed(42)
+samples <- rtruncpois(10, lambda = 100, a = 90, b = 110, method = "inversion")
+samples
+```
+
+---
+
+## Moments
+
+### Mean
+
+`extruncpois(lambda, a, b)` computes $E[X \mid a \leq X \leq b]$ entirely on the log-scale. For the zero-truncated Poisson ($a = 1$), the mean is always strictly greater than $\lambda$:
+
+```{r mean-ztp}
+lambda_val <- 2
+cat("lambda              :", lambda_val, "\n")
+cat("E[X | X >= 1]       :", extruncpois(lambda_val, a = 1), "\n")
+```
+
+As the upper bound $b$ increases toward infinity, the truncated mean converges to $\lambda$:
+
+```{r mean-convergence, fig.height=4.5}
+bounds <- 1:15
+means  <- sapply(bounds, function(b) extruncpois(lambda = 5, a = 0, b = b))
+
+plot(bounds, means, type = "b", pch = 19, col = "steelblue",
+     ylab = "E[X | 0 <= X <= b]", xlab = "Upper Bound b",
+     main = "Mean of Right-Truncated Poisson(λ=5) vs Upper Bound")
+abline(h = 5, lty = 2, col = "firebrick", lwd = 1.5)
+legend("bottomright", legend = c("Truncated mean", "λ = 5"),
+       col = c("steelblue", "firebrick"), pch = c(19, NA),
+       lty = c(1, 2), bty = "n")
+```
+
+### Variance
+
+`vartruncpois(lambda, a, b)` computes the variance via $E[X^2] - (E[X])^2$, keeping all CDF evaluations on the log-scale. Truncation induces _underdispersion_ relative to the standard Poisson (for which $\text{Var}(X) = \lambda$):
+
+```{r variance}
+lambda_val <- 5
+cat("Untruncated variance (= lambda):", lambda_val, "\n")
+cat("Truncated variance [2, 8]      :", vartruncpois(lambda_val, a = 2, b = 8), "\n")
+```
+
+We can verify this computationally via a large simulation:
+
+```{r variance-sim}
+set.seed(99)
+samples <- rtruncpois(20000, lambda = 5, a = 2, b = 8)
+cat("Simulated variance  :", round(var(samples), 4), "\n")
+cat("Theoretical variance:", round(vartruncpois(5, a = 2, b = 8), 4), "\n")
+```
+
+### Median
+
+`mtruncpois(lambda, a, b)` returns the median using log-scale inversion of the midpoint CDF value. The median is guaranteed to lie within $[a, b]$:
+
+```{r median}
+cat("Median (default bounds) :", mtruncpois(lambda = 5), "\n")
+cat("Median [1, Inf]         :", mtruncpois(lambda = 3, a = 1), "\n")
+cat("Median [2, 10]          :", mtruncpois(lambda = 5, a = 2, b = 10), "\n")
+cat("Median (low lambda=0.5) :", mtruncpois(lambda = 0.5, a = 0, b = 5), "\n")
+```
+
+### Mode
+
+`mode_truncpois(lambda, a, b)` returns the most probable value(s) within $[a, b]$. When $\lambda$ is **non-integer**, the unique mode is $\lfloor \lambda \rfloor$. When $\lambda$ is a **positive integer**, both $\lambda - 1$ and $\lambda$ are equally probable, giving tied modes and a warning:
+
+```{r mode-unique}
+mode_truncpois(lambda = 2.5, a = 0, b = 10) # unique mode: floor(2.5) = 2
+```
+
+```{r mode-tie}
+mode_truncpois(lambda = 5, a = 0, b = 10)   # tied modes at 4 and 5, warning issued
+```
+
+When the untruncated mode falls outside $[a, b]$, the mode is clamped to the nearest bound:
+
+```{r mode-clamped}
+mode_truncpois(lambda = 1, a = 3, b = 10)   # clamped to a = 3
+```
+
+---
+
+## References
+
+Nadarajah, S. and Kotz, S. (2006). R Programs for Computing Truncated Distributions. _Journal of Statistical Software_, **16**(2). [doi:10.18637/jss.v016.c02](https://doi.org/10.18637/jss.v016.c02)

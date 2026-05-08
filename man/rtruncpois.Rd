@@ -50,7 +50,7 @@ Nadarajah and Kotz (2006) to the discrete Poisson setting.
 Key differences include:
 \itemize{
 \item All internal calculations are performed on the log-scale for numerical stability
-\item The normalizing constant is computed as log-differnce of the cumulative probabilities
+\item The normalizing constant is computed as log-difference of the cumulative probabilities
 rather than densities
 }
 }

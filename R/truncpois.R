@@ -21,7 +21,7 @@
 #' Key differences include:
 #' \itemize{
 #' \item All internal calculations are performed on the log-scale for numerical stability
-#' \item The normalizing constant is computed as log-differnce of the cumulative probabilities
+#' \item The normalizing constant is computed as log-difference of the cumulative probabilities
 #'    rather than densities
 #' }
 #'
@@ -104,7 +104,7 @@ dtruncpois <- function(x, lambda, a = 0L, b = Inf, log = FALSE) {
 #' Key differences include:
 #' \itemize{
 #' \item All internal calculations are performed on the log-scale for numerical stability
-#' \item The normalizing constant is computed as log-differnce of the cumulative probabilities
+#' \item The normalizing constant is computed as log-difference of the cumulative probabilities
 #'    rather than densities
 #' }
 #'
@@ -193,7 +193,7 @@ ptruncpois <- function(q, lambda, a = 0L, b = Inf,
 #' Key differences include:
 #' \itemize{
 #' \item All internal calculations are performed on the log-scale for numerical stability
-#' \item The normalizing constant is computed as log-differnce of the cumulative probabilities
+#' \item The normalizing constant is computed as log-difference of the cumulative probabilities
 #'    rather than densities
 #' }
 #'
@@ -293,7 +293,7 @@ qtruncpois <- function(p, lambda, a = 0L, b = Inf,
 #' Key differences include:
 #' \itemize{
 #' \item All internal calculations are performed on the log-scale for numerical stability
-#' \item The normalizing constant is computed as log-differnce of the cumulative probabilities
+#' \item The normalizing constant is computed as log-difference of the cumulative probabilities
 #'    rather than densities
 #' }
 #'

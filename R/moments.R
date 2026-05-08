@@ -19,7 +19,7 @@
 #' Key differences include:
 #' \itemize{
 #' \item All internal calculations are performed on the log-scale for numerical stability
-#' \item The normalizing constant is computed as log-differnce of the cumulative probabilities
+#' \item The normalizing constant is computed as log-difference of the cumulative probabilities
 #'    rather than densities
 #' }
 #'
@@ -93,7 +93,7 @@ extruncpois <- function(lambda, a = 0L, b = Inf) {
 #' Key differences include:
 #' \itemize{
 #' \item All internal calculations are performed on the log-scale for numerical stability
-#' \item The normalizing constant is computed as log-differnce of the cumulative probabilities
+#' \item The normalizing constant is computed as log-difference of the cumulative probabilities
 #'    rather than densities
 #' }
 #'
@@ -167,8 +167,9 @@ vartruncpois <- function(lambda, a = 0L, b = Inf) {
 #' @return A single numeric value representing the median.
 #'
 #' @note
-#' The median is computed by inverting the average of the CDF values at the truncation boundaries.
-#' When \code{lambda < 1}, the median may be close to the lower bound \code{a}.
+#' The median is computed by inverting the log-scale average of the CDF values at the truncation
+#' boundaries, using log-space arithmetic for numerical stability. When \code{lambda < 1}, the
+#' median may be close to the lower bound \code{a}.
 #'
 #' @references
 #' Nadarajah, S. and Kotz, S. (2006).
@@ -193,16 +194,12 @@ mtruncpois <- function(lambda, a = 0L, b = Inf) {
   .check_truncpois_bounds(a, b)
   .check_lambda(lambda)
 
-  # Compute the average of the CDF values at the boundaries
-  # G^{-1}((G(b, theta) + G(a-1, theta))/2, theta)
   a_adj <- a - 1L
-  p_lower <- ptruncpois(a_adj, lambda, a = a, b = b, lower.tail = TRUE, log.p = FALSE)
-  p_upper <- ptruncpois(b, lambda, a = a, b = b, lower.tail = TRUE, log.p = FALSE)
-  p_median <- (p_lower + p_upper) / 2
+  log_p_lower <- ptruncpois(a_adj, lambda, a = a, b = b, lower.tail = TRUE, log.p = TRUE)
+  log_p_upper <- ptruncpois(b,     lambda, a = a, b = b, lower.tail = TRUE, log.p = TRUE)
+  log_p_median <- .log_sum(log_p_lower, log_p_upper) - log(2)
 
-  # Apply the quantile function to get the median
-  median <- qtruncpois(p_median, lambda, a = a, b = b, lower.tail = TRUE, log.p = FALSE)
-  return(median)
+  return(qtruncpois(log_p_median, lambda, a = a, b = b, lower.tail = TRUE, log.p = TRUE))
 }
 
 #' Truncated Poisson Mode
@@ -221,13 +218,14 @@ mtruncpois <- function(lambda, a = 0L, b = Inf) {
 #' @param b Upper truncation bound (inclusive). Default is \code{b = Inf}.
 #'
 #' @return An integer vector representing all modes in the truncated region.
-#'    When multiple modes exist after truncation, all are returned.
+#'    When multiple modes exist after truncation, all are returned and a warning is issued.
 #'
 #' @note
-#' This function uses the closed-form mode formula for the discrete Poisson distribution,
-#' accounting for potential ties when \eqn{\lambda} is close to an integer.
-#' When \code{lambda < 1}, the untruncated modes are 0, which is also returned
-#' (assuming \code{a <= 0}).
+#' This function uses the closed-form mode formula for the discrete Poisson distribution.
+#' When \eqn{\lambda} is a positive integer, both \eqn{\lambda - 1} and \eqn{\lambda} are
+#' equally probable modes (tied). When \eqn{\lambda} is non-integer, the unique mode is
+#' \eqn{\lfloor\lambda\rfloor}. When ties exist, a warning is issued and all tied values are
+#' returned. When \code{lambda < 1}, the untruncated mode is 0 (assuming \code{a <= 0}).
 #'
 #' @references
 #' Nadarajah, S. and Kotz, S. (2006).
@@ -240,25 +238,21 @@ mtruncpois <- function(lambda, a = 0L, b = Inf) {
 #' @export
 #'
 #' @examples
-#' # Mode of a standard truncated Poisson
-#' mode_truncpois(lambda = 5, a = 0, b = 10)
-#'
-#' # Mode with potential tie (lambda between two integers)
+#' # Non-integer lambda: unique mode at floor(lambda), no warning
 #' mode_truncpois(lambda = 2.5, a = 0, b = 10)
 #'
-#' # Mode of a zero-truncated Poisson
-#' mode_truncpois(lambda = 3, a = 1)
+#' # Integer lambda: tied modes at lambda-1 and lambda, warning issued
+#' suppressWarnings(mode_truncpois(lambda = 5, a = 0, b = 10))
+#'
+#' # Mode of a zero-truncated Poisson with integer lambda
+#' suppressWarnings(mode_truncpois(lambda = 3, a = 1))
 mode_truncpois <- function(lambda, a = 0L, b = Inf) {
   .check_truncpois_bounds(a, b)
   .check_lambda(lambda)
 
-  # Compute the untruncated mode(s)
-  # For Poisson, the mode is unique(c(ceiling(lambda) - 1, floor(lambda)))
   untruncated_modes <- unique(c(ceiling(lambda) - 1, floor(lambda)))
-
-  # Clamp all modes to the truncation bounds [a, b]
-  modes <- pmin(b, pmax(a, untruncated_modes))
-
-  # Return unique sorted modes
-  return(as.integer(sort(unique(modes))))
+  modes <- as.integer(sort(unique(pmin(b, pmax(a, untruncated_modes)))))
+  if (length(modes) > 1L)
+    warning("The mode is not unique: ", length(modes), " tied values returned.", call. = FALSE)
+  return(modes)
 }

@@ -28,8 +28,9 @@ With \code{a = 0} and \code{b = Inf} as defaults,
 the function returns the median of a non-truncated Poisson distribution.
 }
 \note{
-The median is computed by inverting the average of the CDF values at the truncation boundaries.
-When \code{lambda < 1}, the median may be close to the lower bound \code{a}.
+The median is computed by inverting the log-scale average of the CDF values at the truncation
+boundaries, using log-space arithmetic for numerical stability. When \code{lambda < 1}, the
+median may be close to the lower bound \code{a}.
 }
 \examples{
 # Median of a standard truncated Poisson

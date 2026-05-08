@@ -1,22 +1,26 @@
-Package: truncpois
 Type: Package
+Package: truncpois
 Title: Truncated Poisson Distribution
 Version: 0.1.0
-Authors@R: c(
-    person("Arun", "Sundar Paulraj", email = "arun.paulraj.2026@mumail.ie", role = c("aut", "cre")),
-    person("Keefe", "Murphy", email = "keefe.murphy@mu.ie", role = "aut")
-  )
 Date: 2026-04-05
-Description: Provides functions for the truncated Poisson distribution, including
-    density (dtruncpois), cumulative distribution function (ptruncpois),
-    quantile function (qtruncpois), and random generation (rtruncpois).
-    Also includes functions for mean (extruncpois) and variance (vartruncpois).
+Authors@R: c(
+    person("Arun", "Sundar Paulraj", , "arun.paulraj.2026@mumail.ie", role = c("aut", "cre")),
+    person("Keefe", "Murphy", , "keefe.murphy@mu.ie", role = "aut")
+  )
+Description: Provides functions for the truncated Poisson distribution,
+    including density (dtruncpois), cumulative distribution function
+    (ptruncpois), quantile function (qtruncpois), and random generation
+    (rtruncpois).  Also includes functions for the mean (extruncpois),
+    variance (vartruncpois), median (mtruncpois), and mode
+    (mode_truncpois) of the truncated Poisson distribution.
 License: GPL (>= 3)
+Suggests:
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+VignetteBuilder: 
+    knitr
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.3
-Suggests: 
-    knitr,
-    rmarkdown
-VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
