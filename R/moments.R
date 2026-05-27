@@ -1,6 +1,6 @@
 #' Truncated Poisson Mean
 #'
-#' Compute the expected value of a truncated poisson distribution
+#' Compute the expected value of a truncated Poisson distribution.
 #'
 #' Compute the expected value of a truncated Poisson distribution,
 #' \eqn{E[X \mid a \le X \le b]}, evaluated in log-space for numerical
@@ -8,8 +8,9 @@
 #' the mean of a non-truncated Poisson distribution.
 #'
 #' @param lambda Positive numeric scalar, the mean parameter of the Poisson distribution.
-#' @param a Lower truncation bound (inclusive). Default is \code{a = 0}.
-#' @param b Upper truncation bound (inclusive). Default is \code{b = Inf}.
+#' @param a Non-negative integer lower truncation bound (inclusive). Default is \code{a = 0}.
+#' @param b Strictly positive integer upper truncation bound (inclusive), or \code{Inf}.
+#'   Default is \code{b = Inf}.
 #'
 #' @return A single positive numeric value representing the expected value.
 #'
@@ -18,10 +19,16 @@
 #' Nadarajah and Kotz (2006) to the discrete Poisson setting.
 #' Key differences include:
 #' \itemize{
-#' \item All internal calculations are performed on the log-scale for numerical stability
-#' \item The normalizing constant is computed as log-difference of the cumulative probabilities
-#'    rather than densities
+#' \item The mean is computed using a closed-form formula derived from the
+#'   recurrence relation of the Poisson distribution, not numerical integration.
+#' \item All internal calculations are performed on the log-scale for numerical stability.
+#' \item The normalizing constant is computed as the log-difference of cumulative
+#'   probabilities (\code{\link[stats]{ppois}}) evaluated at the truncation bounds.
 #' }
+#'
+#' @seealso
+#' \code{\link{vartruncpois}}, \code{\link{medtruncpois}}, \code{\link{modtruncpois}}
+#' for the variance, median, and mode.
 #'
 #' @references
 #' Nadarajah, S. and Kotz, S. (2006).
@@ -41,6 +48,7 @@
 #' # Examine how the mean changes as the upper bound increases
 #' bounds <- 1:10
 #' means <- sapply(bounds, function(b) extruncpois(lambda = 5, a = 0, b = b))
+#' means
 #'
 #' # Plot demonstrating convergence to the untruncated mean
 #' plot(bounds, means, type = "b", pch = 19, col = "blue",
@@ -71,7 +79,7 @@ extruncpois <- function(lambda, a = 0L, b = Inf) {
 
 #' Truncated Poisson Variance
 #'
-#' Compute the variance of a truncated poisson distribution
+#' Compute the variance of a truncated Poisson distribution.
 #'
 #' Compute the variance of a truncated Poisson distribution,
 #' \eqn{\text{Var}(X \mid a \le X \le b)}, via the identity
@@ -82,8 +90,9 @@ extruncpois <- function(lambda, a = 0L, b = Inf) {
 #' non-truncated Poisson distribution.
 #'
 #' @param lambda Positive numeric scalar, the mean parameter of the Poisson distribution.
-#' @param a Lower truncation bound (inclusive). Default is \code{a = 0}.
-#' @param b Upper truncation bound (inclusive). Default is \code{b = Inf}.
+#' @param a Non-negative integer lower truncation bound (inclusive). Default is \code{a = 0}.
+#' @param b Strictly positive integer upper truncation bound (inclusive), or \code{Inf}.
+#'   Default is \code{b = Inf}.
 #'
 #' @return A single non-negative numeric value representing the variance.
 #'
@@ -92,12 +101,17 @@ extruncpois <- function(lambda, a = 0L, b = Inf) {
 #' Nadarajah and Kotz (2006) to the discrete Poisson setting.
 #' Key differences include:
 #' \itemize{
-#' \item All internal calculations are performed on the log-scale for numerical stability
-#' \item The normalizing constant is computed as log-difference of the cumulative probabilities
-#'    rather than densities
+#' \item The variance is computed using a closed-form formula via
+#'   \eqn{E[X^2] - E[X]^2}, with the second moment derived from the Poisson
+#'   recurrence — no numerical integration is used.
+#' \item All internal calculations are performed on the log-scale for numerical stability.
+#' \item The normalizing constant is computed as the log-difference of cumulative
+#'   probabilities (\code{\link[stats]{ppois}}) evaluated at the truncation bounds.
 #' }
 #'
-#' @seealso \code{\link{extruncpois}} for the corresponding mean.
+#' @seealso
+#' \code{\link{extruncpois}} for the corresponding mean.
+#' \code{\link{medtruncpois}}, \code{\link{modtruncpois}} for the median and mode.
 #'
 #' @references
 #' Nadarajah, S. and Kotz, S. (2006).
@@ -113,16 +127,13 @@ extruncpois <- function(lambda, a = 0L, b = Inf) {
 #' # Poisson distribution has variance == mean.
 #' # Truncation reduces the variance (underdispersion).
 #' lambda_val <- 5
-#' untrunc_var <- lambda_val
-#' trunc_var <- vartruncpois(lambda_val, b = 6)
-#'
-#' cat("Untruncated Variance:", untrunc_var, "\n")
-#' cat("Truncated Variance  :", trunc_var, "\n")
+#' c("Untruncated variance" = lambda_val,
+#'   "Truncated variance [0, 6]" = vartruncpois(lambda_val, b = 6))
 #'
 #' # Verify computationally with a large sample simulation
 #' set.seed(42)
 #' samples <- rtruncpois(10000, lambda = 5, b = 6)
-#' var(samples) # Should be close to trunc_var
+#' var(samples) # Should be close to vartruncpois(5, b = 6)
 vartruncpois <- function(lambda, a = 0L, b = Inf) {
   .check_truncpois_bounds(a, b)
   .check_lambda(lambda)
@@ -156,13 +167,15 @@ vartruncpois <- function(lambda, a = 0L, b = Inf) {
 #' Compute the median of a truncated Poisson distribution,
 #' \eqn{\text{median}(X \mid a \le X \le b)}, using the formula:
 #' \eqn{G^{-1}((G(b, \theta) + G(a-1, \theta))/2, \theta)},
-#' where \eqn{G} is the CDF (ppois) and \eqn{G^{-1}} is the quantile function (qpois).
+#' where \eqn{G} is the CDF (\code{\link[stats]{ppois}}) and \eqn{G^{-1}} is the quantile
+#' function (\code{\link[stats]{qpois}}).
 #' With \code{a = 0} and \code{b = Inf} as defaults,
 #' the function returns the median of a non-truncated Poisson distribution.
 #'
 #' @param lambda Positive numeric scalar, the mean parameter of the Poisson distribution.
-#' @param a Lower truncation bound (inclusive). Default is \code{a = 0}.
-#' @param b Upper truncation bound (inclusive). Default is \code{b = Inf}.
+#' @param a Non-negative integer lower truncation bound (inclusive). Default is \code{a = 0}.
+#' @param b Strictly positive integer upper truncation bound (inclusive), or \code{Inf}.
+#'   Default is \code{b = Inf}.
 #'
 #' @return A single numeric value representing the median.
 #'
@@ -170,6 +183,11 @@ vartruncpois <- function(lambda, a = 0L, b = Inf) {
 #' The median is computed by inverting the log-scale average of the CDF values at the truncation
 #' boundaries, using log-space arithmetic for numerical stability. When \code{lambda < 1}, the
 #' median may be close to the lower bound \code{a}.
+#'
+#' @seealso
+#' \code{\link{extruncpois}}, \code{\link{vartruncpois}}, \code{\link{modtruncpois}}
+#' for the mean, variance, and mode.
+#' \code{\link{qtruncpois}} which is used internally to compute the median.
 #'
 #' @references
 #' Nadarajah, S. and Kotz, S. (2006).
@@ -183,14 +201,14 @@ vartruncpois <- function(lambda, a = 0L, b = Inf) {
 #'
 #' @examples
 #' # Median of a standard truncated Poisson
-#' mtruncpois(lambda = 5, a = 0, b = 10)
+#' medtruncpois(lambda = 5, a = 0, b = 10)
 #'
 #' # Median with low intensity: less than 1
-#' mtruncpois(lambda = 0.5, a = 0, b = 5)
+#' medtruncpois(lambda = 0.5, a = 0, b = 5)
 #'
 #' # Median of a zero-truncated Poisson
-#' mtruncpois(lambda = 3, a = 1)
-mtruncpois <- function(lambda, a = 0L, b = Inf) {
+#' medtruncpois(lambda = 3, a = 1)
+medtruncpois <- function(lambda, a = 0L, b = Inf) {
   .check_truncpois_bounds(a, b)
   .check_lambda(lambda)
 
@@ -214,8 +232,9 @@ mtruncpois <- function(lambda, a = 0L, b = Inf) {
 #' that fall within the truncation region.
 #'
 #' @param lambda Positive numeric scalar, the mean parameter of the Poisson distribution.
-#' @param a Lower truncation bound (inclusive). Default is \code{a = 0}.
-#' @param b Upper truncation bound (inclusive). Default is \code{b = Inf}.
+#' @param a Non-negative integer lower truncation bound (inclusive). Default is \code{a = 0}.
+#' @param b Strictly positive integer upper truncation bound (inclusive), or \code{Inf}.
+#'   Default is \code{b = Inf}.
 #'
 #' @return An integer vector representing all modes in the truncated region.
 #'    When multiple modes exist after truncation, all are returned and a warning is issued.
@@ -225,7 +244,11 @@ mtruncpois <- function(lambda, a = 0L, b = Inf) {
 #' When \eqn{\lambda} is a positive integer, both \eqn{\lambda - 1} and \eqn{\lambda} are
 #' equally probable modes (tied). When \eqn{\lambda} is non-integer, the unique mode is
 #' \eqn{\lfloor\lambda\rfloor}. When ties exist, a warning is issued and all tied values are
-#' returned. When \code{lambda < 1}, the untruncated mode is 0 (assuming \code{a <= 0}).
+#' returned. When \code{lambda < 1}, the untruncated mode is 0 (assuming \code{a = 0}).
+#'
+#' @seealso
+#' \code{\link{extruncpois}}, \code{\link{vartruncpois}}, \code{\link{medtruncpois}}
+#' for the mean, variance, and median.
 #'
 #' @references
 #' Nadarajah, S. and Kotz, S. (2006).
@@ -239,14 +262,14 @@ mtruncpois <- function(lambda, a = 0L, b = Inf) {
 #'
 #' @examples
 #' # Non-integer lambda: unique mode at floor(lambda), no warning
-#' mode_truncpois(lambda = 2.5, a = 0, b = 10)
+#' modtruncpois(lambda = 2.5, a = 0, b = 10)
 #'
 #' # Integer lambda: tied modes at lambda-1 and lambda, warning issued
-#' suppressWarnings(mode_truncpois(lambda = 5, a = 0, b = 10))
+#' suppressWarnings(modtruncpois(lambda = 5, a = 0, b = 10))
 #'
 #' # Mode of a zero-truncated Poisson with integer lambda
-#' suppressWarnings(mode_truncpois(lambda = 3, a = 1))
-mode_truncpois <- function(lambda, a = 0L, b = Inf) {
+#' suppressWarnings(modtruncpois(lambda = 3, a = 1))
+modtruncpois <- function(lambda, a = 0L, b = Inf) {
   .check_truncpois_bounds(a, b)
   .check_lambda(lambda)
 

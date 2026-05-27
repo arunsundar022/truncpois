@@ -16,9 +16,10 @@ plot_truncpois(
 \arguments{
 \item{lambda}{Positive numeric scalar, the mean parameter of the Poisson distribution.}
 
-\item{a}{Lower truncation bound (inclusive). Default is \code{a = 0}.}
+\item{a}{Non-negative integer lower truncation bound (inclusive). Default is \code{a = 0}.}
 
-\item{b}{Upper truncation bound (inclusive). Default is \code{b = Inf}.}
+\item{b}{Strictly positive integer upper truncation bound (inclusive), or \code{Inf}.
+Default is \code{b = Inf}.}
 
 \item{type}{Character string; one of \code{"pmf"} (default) or \code{"cdf"}.}
 
@@ -39,14 +40,16 @@ Plot the probability mass function (PMF) or cumulative distribution function
 untruncated Poisson for comparison.
 }
 \note{
-The effective support is determined by finding where the untruncated Poisson
-probability exceeds \code{.Machine$double.eps}, then intersecting with \code{[a, b]}.
+When \code{compare = TRUE}, the axis limits are chosen to cover both the
+truncated and untruncated distributions, so the effect of truncation is
+always visible. For \code{type = "cdf"}, the x-axis starts at 0 regardless
+of \code{a}, so that left-truncation is apparent.
 }
 \examples{
 # Plot PMF comparing truncated and untruncated Poisson
 plot_truncpois(lambda = 5, b = 8)
 
-# Plot CDF of a zero-truncated Poisson
+# Plot CDF of a zero-truncated Poisson (x-axis starts at 0 to show truncation)
 plot_truncpois(lambda = 3, a = 1, type = "cdf")
 
 # Plot PMF without comparison overlay

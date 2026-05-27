@@ -11,9 +11,10 @@ qtruncpois(p, lambda, a = 0L, b = Inf, lower.tail = TRUE, log.p = FALSE)
 
 \item{lambda}{Positive numeric vector, the mean parameter of the Poisson distribution.}
 
-\item{a}{Lower truncation bound (inclusive). Default is \code{a = 0}.}
+\item{a}{Non-negative integer lower truncation bound (inclusive). Default is \code{a = 0}.}
 
-\item{b}{Upper truncation bound (inclusive). Default is \code{b = Inf}.}
+\item{b}{Strictly positive integer upper truncation bound (inclusive), or \code{Inf}.
+Default is \code{b = Inf}.}
 
 \item{lower.tail}{Logical; If \code{TRUE} (default), probabilities are \eqn{P(X \le x)}; otherwise, \eqn{P(X > x)}.}
 
@@ -23,7 +24,7 @@ qtruncpois(p, lambda, a = 0L, b = Inf, lower.tail = TRUE, log.p = FALSE)
 A numeric vector of quantiles of the same length as \code{p}.
 }
 \description{
-Compute the quantile function of a truncated poisson distribution
+Compute the quantile function of a truncated Poisson distribution.
 }
 \details{
 With \code{a = 0} and \code{b = Inf} as defaults, the function behaves identically to
@@ -34,9 +35,12 @@ This implementation adapts the continuous truncated distribution framework of
 Nadarajah and Kotz (2006) to the discrete Poisson setting.
 Key differences include:
 \itemize{
-\item All internal calculations are performed on the log-scale for numerical stability
-\item The normalizing constant is computed as log-difference of the cumulative probabilities
-rather than densities
+\item All internal calculations are performed on the log-scale for numerical stability.
+\item The normalizing constant is computed as the log-difference of cumulative
+probabilities (\code{\link[stats]{ppois}}) evaluated at the truncation bounds.
+\item All four combinations of \code{lower.tail} and \code{log.p} are correctly
+handled entirely on the log-scale, consistent with \code{\link[stats]{qpois}}
+conventions and avoiding issues present in naive implementations.
 }
 }
 \examples{
@@ -44,19 +48,31 @@ rather than densities
 p <- seq(0.1, 0.9, by = 0.2)
 q <- qtruncpois(p, lambda = 10, a = 5, b = 15)
 
-# Verify the inverse relationship with ptruncpois
-# The CDF at the generated quantiles should be >= the target probabilities
+# Verify the inverse relationship with ptruncpois:
+# the CDF at the returned quantiles should be >= the target probabilities
 cdf_at_q <- ptruncpois(q, lambda = 10, a = 5, b = 15)
 rbind(Target_p = p, Quantile = q, Actual_CDF = cdf_at_q)
 
-# Dealing with probabilities in log-space correctly
+# Probabilities supplied on the log-scale (log.p = TRUE)
 qtruncpois(log(p), lambda = 10, a = 5, b = 15, log.p = TRUE)
+
+# Upper-tail quantiles: smallest x with P(X > x) <= p
+qtruncpois(p, lambda = 10, a = 5, b = 15, lower.tail = FALSE)
+
+# Upper-tail quantiles supplied as log-probabilities
+qtruncpois(log(p), lambda = 10, a = 5, b = 15,
+           lower.tail = FALSE, log.p = TRUE)
 }
 \references{
 Nadarajah, S. and Kotz, S. (2006).
 \dQuote{R Programs for Computing Truncated Distributions}
 \emph{Journal of Statistical Software}
 \url{https://www.jstatsoft.org/v16/c02/}
+}
+\seealso{
+\code{\link{ptruncpois}} for the corresponding CDF.
+\code{\link{dtruncpois}}, \code{\link{rtruncpois}} for the PMF and random generation.
+\code{\link[stats]{qpois}} for the untruncated Poisson quantile function.
 }
 \author{
 Arun Sundar Paulraj and Keefe Murphy

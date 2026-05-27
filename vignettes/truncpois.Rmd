@@ -8,6 +8,7 @@ vignette: >
   %\VignetteIndexEntry{Introduction to the truncpois Package}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteDepends{LaplacesDemon}
 ---
 
 ```{r setup, include=FALSE}
@@ -37,20 +38,17 @@ The __truncpois__ package provides a complete suite of functions for the truncat
 | `rtruncpois()` | Random sample generation |
 | `extruncpois()` | Expected value (mean) |
 | `vartruncpois()` | Variance |
-| `mtruncpois()` | Median |
-| `mode_truncpois()` | Mode |
+| `medtruncpois()` | Median |
+| `modtruncpois()` | Mode |
 
 All functions accept `a` (lower truncation bound, inclusive, default `0`) and `b` (upper truncation bound, inclusive, default `Inf`). All internal computations are performed on the log-scale for numerical stability, following the framework of Nadarajah and Kotz (2006).
 
 ### Installation
 
 ```{r install, eval=FALSE}
-# Install from CRAN
-install.packages("truncpois")
-
-# Or install the development version from GitHub
-# install.packages("remotes")
-remotes::install_github("arunsundar022/truncpois")
+# Install the development version from GitHub
+# install.packages("pak")
+pak::pak("arunsundar022/truncpois")
 ```
 
 ```{r load}
@@ -73,7 +71,7 @@ p_trunc    <- dtruncpois(x, lambda = 5, a = 2, b = 10)
 round(rbind(x = x, Poisson = p_pois, Truncated = p_trunc), 4)
 ```
 
-Notice that `dtruncpois` returns 0 for $x < a = 2$ and $x > b = 10$, and the remaining probabilities are rescaled to sum to 1.
+Notice that `dtruncpois` returns 0 for $x < a = 2$ and $x > b = 10$, and the probabilities over the support $[2, 10]$ are rescaled so that they sum to 1 over the entire support.
 
 ```{r pmf-plot, fig.height=4.5}
 barplot(
@@ -160,11 +158,12 @@ x_bounded   <- rtruncpois(1000, lambda = 3, a = 1, b = Inf, method = "bounded")
 All three methods produce samples entirely within $[a, b]$ and converge to the same distribution:
 
 ```{r random-compare}
-cat("Method       Min  Max  Mean\n")
-cat(sprintf("direct      %3d  %3d  %.3f\n", min(x_direct),    max(x_direct),    mean(x_direct)))
-cat(sprintf("inversion   %3d  %3d  %.3f\n", min(x_inversion), max(x_inversion), mean(x_inversion)))
-cat(sprintf("bounded     %3d  %3d  %.3f\n", min(x_bounded),   max(x_bounded),   mean(x_bounded)))
-cat(sprintf("Theoretical  --   --  %.3f\n", extruncpois(3, a = 1)))
+rbind(
+  direct     = c(min = min(x_direct),    max = max(x_direct),    mean = mean(x_direct)),
+  inversion  = c(min = min(x_inversion), max = max(x_inversion), mean = mean(x_inversion)),
+  bounded    = c(min = min(x_bounded),   max = max(x_bounded),   mean = mean(x_bounded)),
+  theoretical = c(min = NA, max = NA,    mean = extruncpois(3, a = 1))
+)
 ```
 
 For a heavily truncated distribution where the support is wide, use `method = "inversion"` to avoid the finite-support requirement of `"direct"`:
@@ -185,8 +184,7 @@ samples
 
 ```{r mean-ztp}
 lambda_val <- 2
-cat("lambda              :", lambda_val, "\n")
-cat("E[X | X >= 1]       :", extruncpois(lambda_val, a = 1), "\n")
+c(lambda = lambda_val, "E[X | X >= 1]" = extruncpois(lambda_val, a = 1))
 ```
 
 As the upper bound $b$ increases toward infinity, the truncated mean converges to $\lambda$:
@@ -210,8 +208,8 @@ legend("bottomright", legend = c("Truncated mean", "λ = 5"),
 
 ```{r variance}
 lambda_val <- 5
-cat("Untruncated variance (= lambda):", lambda_val, "\n")
-cat("Truncated variance [2, 8]      :", vartruncpois(lambda_val, a = 2, b = 8), "\n")
+c("Untruncated variance (= lambda)" = lambda_val,
+  "Truncated variance [2, 8]"       = vartruncpois(lambda_val, a = 2, b = 8))
 ```
 
 We can verify this computationally via a large simulation:
@@ -219,38 +217,129 @@ We can verify this computationally via a large simulation:
 ```{r variance-sim}
 set.seed(99)
 samples <- rtruncpois(20000, lambda = 5, a = 2, b = 8)
-cat("Simulated variance  :", round(var(samples), 4), "\n")
-cat("Theoretical variance:", round(vartruncpois(5, a = 2, b = 8), 4), "\n")
+c("Simulated variance"   = round(var(samples), 4),
+  "Theoretical variance" = round(vartruncpois(5, a = 2, b = 8), 4))
 ```
 
 ### Median
 
-`mtruncpois(lambda, a, b)` returns the median using log-scale inversion of the midpoint CDF value. The median is guaranteed to lie within $[a, b]$:
+`medtruncpois(lambda, a, b)` returns the median using log-scale inversion of the midpoint CDF value. The median is guaranteed to lie within $[a, b]$:
 
 ```{r median}
-cat("Median (default bounds) :", mtruncpois(lambda = 5), "\n")
-cat("Median [1, Inf]         :", mtruncpois(lambda = 3, a = 1), "\n")
-cat("Median [2, 10]          :", mtruncpois(lambda = 5, a = 2, b = 10), "\n")
-cat("Median (low lambda=0.5) :", mtruncpois(lambda = 0.5, a = 0, b = 5), "\n")
+c("Median (default bounds)" = medtruncpois(lambda = 5),
+  "Median [1, Inf]"         = medtruncpois(lambda = 3, a = 1),
+  "Median [2, 10]"          = medtruncpois(lambda = 5, a = 2, b = 10),
+  "Median (low lambda=0.5)" = medtruncpois(lambda = 0.5, a = 0, b = 5))
 ```
 
 ### Mode
 
-`mode_truncpois(lambda, a, b)` returns the most probable value(s) within $[a, b]$. When $\lambda$ is **non-integer**, the unique mode is $\lfloor \lambda \rfloor$. When $\lambda$ is a **positive integer**, both $\lambda - 1$ and $\lambda$ are equally probable, giving tied modes and a warning:
+`modtruncpois(lambda, a, b)` returns the most probable value(s) within $[a, b]$. When $\lambda$ is **non-integer**, the unique mode is $\lfloor \lambda \rfloor$. When $\lambda$ is a **positive integer**, both $\lambda - 1$ and $\lambda$ are equally probable, giving tied modes and a warning:
 
 ```{r mode-unique}
-mode_truncpois(lambda = 2.5, a = 0, b = 10) # unique mode: floor(2.5) = 2
+modtruncpois(lambda = 2.5, a = 0, b = 10) # unique mode: floor(2.5) = 2
 ```
 
 ```{r mode-tie}
-mode_truncpois(lambda = 5, a = 0, b = 10)   # tied modes at 4 and 5, warning issued
+modtruncpois(lambda = 5, a = 0, b = 10)   # tied modes at 4 and 5, warning issued
 ```
 
 When the untruncated mode falls outside $[a, b]$, the mode is clamped to the nearest bound:
 
 ```{r mode-clamped}
-mode_truncpois(lambda = 1, a = 3, b = 10)   # clamped to a = 3
+modtruncpois(lambda = 1, a = 3, b = 10)   # clamped to a = 3
 ```
+
+---
+
+## Comparison with LaplacesDemon
+
+The `LaplacesDemon` package also provides a truncated Poisson distribution via
+`dtrunc()`, `ptrunc()`, `qtrunc()`, and `rtrunc()` with `spec = "pois"`.
+This section demonstrates two important limitations of that implementation that
+**truncpois** addresses, making it a meaningful advance over existing open-source
+software for the truncated Poisson distribution.
+
+```{r laplacesdemon-setup}
+ld_available <- requireNamespace("LaplacesDemon", quietly = TRUE)
+```
+
+### 1. Incomplete handling of `lower.tail` and `log.p`
+
+`ptruncpois()` and `qtruncpois()` correctly handle all four combinations of
+`lower.tail` and `log.p`, computing everything on the log-scale to avoid
+numerical cancellation. `LaplacesDemon::ptrunc()` does not support these
+arguments — it always returns the lower-tail probability $P(X \leq q)$ on the
+linear scale only.
+
+```{r laplacesdemon-lowtail, eval=ld_available}
+# Lower-tail probability P(X <= 7 | 2 <= X <= 10, lambda = 5)
+ptruncpois(7, lambda = 5, a = 2, b = 10)
+LaplacesDemon::ptrunc(7, spec = "pois", a = 2, b = 10, lambda = 5)
+```
+
+To obtain an upper-tail probability or a log-probability from `LaplacesDemon`,
+users must transform the result manually:
+
+```{r laplacesdemon-uppertail, eval=ld_available}
+# Upper-tail probability P(X > 7 | 2 <= X <= 10, lambda = 5)
+
+# truncpois: native lower.tail and log.p support, computed on log-scale
+ptruncpois(7, lambda = 5, a = 2, b = 10, lower.tail = FALSE)
+ptruncpois(7, lambda = 5, a = 2, b = 10, lower.tail = FALSE, log.p = TRUE)
+
+# LaplacesDemon: manual subtraction and log() required
+1 - LaplacesDemon::ptrunc(7, spec = "pois", a = 2, b = 10, lambda = 5)
+log(1 - LaplacesDemon::ptrunc(7, spec = "pois", a = 2, b = 10, lambda = 5))
+```
+
+This manual approach is error-prone and, for extreme probabilities where
+$P(X \leq q)$ is very close to 1, suffers from catastrophic cancellation:
+the subtraction $1 - p$ loses all significant digits, producing an
+inaccurate log-probability. `truncpois` avoids this entirely by computing
+log-probabilities directly using numerically stable `log1p` and `expm1`
+arithmetic throughout.
+
+Similarly, `qtruncpois()` accepts `log.p = TRUE` and `lower.tail = FALSE`,
+while `LaplacesDemon::qtrunc()` does not:
+
+```{r laplacesdemon-qtrunc, eval=ld_available}
+# Upper-tail quantile: smallest x such that P(X > x) <= 0.1
+qtruncpois(0.1, lambda = 5, a = 2, b = 10, lower.tail = FALSE)
+
+# Same result using log-scale input
+qtruncpois(log(0.1), lambda = 5, a = 2, b = 10, lower.tail = FALSE, log.p = TRUE)
+
+# LaplacesDemon: no lower.tail support -- returns the lower-tail 10th percentile
+# instead of the upper-tail 10th percentile
+LaplacesDemon::qtrunc(0.1, spec = "pois", a = 2, b = 10, lambda = 5)
+```
+
+### 2. No closed-form moments
+
+`LaplacesDemon` provides no functions for the mean, variance, median, or mode of
+the truncated Poisson distribution. Users must resort to Monte Carlo simulation,
+which is both slow and introduces sampling variability. **truncpois** provides
+exact closed-form results for all four moments:
+
+```{r laplacesdemon-moments, eval=ld_available}
+# Exact closed-form moments from truncpois (deterministic, no approximation error)
+extruncpois(lambda = 5, a = 2, b = 10)
+vartruncpois(lambda = 5, a = 2, b = 10)
+medtruncpois(lambda = 5, a = 2, b = 10)
+suppressWarnings(modtruncpois(lambda = 5, a = 2, b = 10))
+
+# LaplacesDemon: no equivalent -- simulation is the only option
+set.seed(42)
+samp <- LaplacesDemon::rtrunc(100000, spec = "pois", a = 2, b = 10, lambda = 5)
+mean(samp)   # approximation -- varies with sample size and seed
+var(samp)    # approximation -- varies with sample size and seed
+```
+
+The simulation approach has non-zero sampling error, scales poorly for extreme
+truncation parameters, and cannot be used where reproducibility or analytical
+precision is required. `truncpois` returns the exact value in closed form for
+any $(\lambda, a, b)$.
 
 ---
 

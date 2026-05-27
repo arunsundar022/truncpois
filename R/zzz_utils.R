@@ -17,10 +17,10 @@
 }
 
 .check_truncpois_bounds <- function(a, b) {
-  if (!is.numeric(a) || any(a < 0L))
-    stop("'a' must be non-negative and numeric", call. = FALSE)
-  if (!is.numeric(b) || any(b <= 0))
-    stop("'b' must be strictly positive and numeric", call. = FALSE)
+  if (!is.numeric(a) || any(a < 0) || any(a != floor(a)))
+    stop("'a' must be a non-negative integer", call. = FALSE)
+  if (!is.numeric(b) || any(b <= 0) || any(is.finite(b) & b != floor(b)))
+    stop("'b' must be a strictly positive integer (or Inf)", call. = FALSE)
   if (any(a >= b))
     stop("Lower bound 'a' must be less than upper bound 'b'", call. = FALSE)
   invisible(NULL)
@@ -39,7 +39,7 @@
   )
 }
 
-.gumbel_max <- function(lprobs, n = 1) {
+.gumbel_max <- function(lprobs, n = 1L) {
   gumbel <- matrix(log(stats::rexp(n * length(lprobs), 1)), nrow = n)
   lprobs <- sweep(-gumbel, 2, lprobs, FUN = "+", check.margin = FALSE)
   return(max.col(lprobs, ties.method = "first"))

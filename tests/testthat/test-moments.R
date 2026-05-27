@@ -40,44 +40,44 @@ test_that("vartruncpois large-sample convergence", {
   expect_equal(var(s), vartruncpois(4, a = 1, b = 10), tolerance = 0.1)
 })
 
-test_that("mtruncpois result is within [a, b]", {
-  m <- mtruncpois(lambda = 5, a = 2, b = 9)
+test_that("medtruncpois result is within [a, b]", {
+  m <- medtruncpois(lambda = 5, a = 2, b = 9)
   expect_gte(m, 2)
   expect_lte(m, 9)
 })
 
-test_that("mtruncpois equals qtruncpois at p = 0.5", {
+test_that("medtruncpois equals qtruncpois at p = 0.5", {
   lambda <- 4; a <- 1; b <- 12
-  expect_equal(mtruncpois(lambda, a, b),
+  expect_equal(medtruncpois(lambda, a, b),
                qtruncpois(0.5, lambda, a, b))
 })
 
-test_that("mtruncpois with default bounds is consistent with qpois", {
-  expect_equal(mtruncpois(lambda = 3),
+test_that("medtruncpois with default bounds is consistent with qpois", {
+  expect_equal(medtruncpois(lambda = 3),
                qtruncpois(0.5, lambda = 3))
 })
 
-test_that("mode_truncpois issues warning and returns two values for integer lambda", {
-  expect_warning(mode_truncpois(lambda = 3, a = 0, b = 10), "mode is not unique")
-  expect_warning(mode_truncpois(lambda = 5, a = 0, b = 10), "mode is not unique")
+test_that("modtruncpois issues warning and returns two values for integer lambda", {
+  expect_warning(modtruncpois(lambda = 3, a = 0, b = 10), "mode is not unique")
+  expect_warning(modtruncpois(lambda = 5, a = 0, b = 10), "mode is not unique")
   suppressWarnings({
-    expect_equal(mode_truncpois(lambda = 3, a = 0, b = 10), c(2L, 3L))
-    expect_equal(mode_truncpois(lambda = 5, a = 0, b = 10), c(4L, 5L))
+    expect_equal(modtruncpois(lambda = 3, a = 0, b = 10), c(2L, 3L))
+    expect_equal(modtruncpois(lambda = 5, a = 0, b = 10), c(4L, 5L))
   })
 })
 
-test_that("mode_truncpois returns unique mode for non-integer lambda", {
-  m <- mode_truncpois(lambda = 2.5, a = 0, b = 10)
+test_that("modtruncpois returns unique mode for non-integer lambda", {
+  m <- modtruncpois(lambda = 2.5, a = 0, b = 10)
   expect_length(m, 1)
   expect_equal(m, 2L)
 })
 
-test_that("mode_truncpois clamps result to [a, b]", {
-  m <- mode_truncpois(lambda = 1, a = 3, b = 10)
+test_that("modtruncpois clamps result to [a, b]", {
+  m <- modtruncpois(lambda = 1, a = 3, b = 10)
   expect_equal(m, 3L)
 })
 
-test_that("mode_truncpois stops for invalid inputs", {
-  expect_error(mode_truncpois(lambda = -1))
-  expect_error(mode_truncpois(lambda = 3, a = 5, b = 3))
+test_that("modtruncpois stops for invalid inputs", {
+  expect_error(modtruncpois(lambda = -1))
+  expect_error(modtruncpois(lambda = 3, a = 5, b = 3))
 })

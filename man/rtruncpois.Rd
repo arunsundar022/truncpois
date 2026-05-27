@@ -17,16 +17,17 @@ rtruncpois(
 
 \item{lambda}{Positive numeric scalar, the mean parameter of the Poisson distribution.}
 
-\item{a}{Lower truncation bound (inclusive). Default is \code{a = 0}.}
+\item{a}{Non-negative integer lower truncation bound (inclusive). Default is \code{a = 0}.}
 
-\item{b}{Upper truncation bound (inclusive). Default is \code{b = Inf}.}
+\item{b}{Strictly positive integer upper truncation bound (inclusive), or \code{Inf}.
+Default is \code{b = Inf}.}
 
 \item{method}{Character string specifying the sampling algorithm. One of:
 \describe{
 \item{\code{"direct"}}{Enumerate the support and sample via
-\code{\link[base]{sample}()}. Fast when the support is small, but
+\code{\link[base]{sample}}. Fast when the support is small, but
 fails for infinite or very wide supports.}
-\item{\code{"inversion"}}{Inversion sampling via \code{qtruncpois()}.
+\item{\code{"inversion"}}{Inversion sampling via \code{\link{qtruncpois}}.
 Works for any finite \code{lambda} regardless of support width.}
 \item{\code{"bounded"}}{Uniform-CDF inversion through the untruncated
 Poisson CDF. Efficient when the truncation region covers most of the
@@ -38,21 +39,25 @@ Default is \code{"direct"}.}
 A numeric vector of random deviates of length \code{n}.
 }
 \description{
-Draw random samples from a truncated poisson distribution
+Draw random samples from a truncated Poisson distribution.
 }
 \details{
 With \code{a = 0} and \code{b = Inf} as defaults, the function behaves identically to
 \code{\link[stats]{rpois}}, corresponding to a non-truncated Poisson distribution.
 }
 \note{
-This implementation adapts the continuous truncated distribution framework of
-Nadarajah and Kotz (2006) to the discrete Poisson setting.
-Key differences include:
+Three distinct sampling algorithms are provided to cover different parameter regimes:
 \itemize{
-\item All internal calculations are performed on the log-scale for numerical stability
-\item The normalizing constant is computed as log-difference of the cumulative probabilities
-rather than densities
+\item \code{"direct"} uses the Gumbel-max trick to sample in one pass from the
+enumerated support. It is fast when the support is small but requires finite bounds.
+\item \code{"inversion"} transforms uniform random variables through
+\code{\link{qtruncpois}} and works for any finite \code{lambda} regardless of
+support width.
+\item \code{"bounded"} performs CDF-inversion entirely within the truncation window
+via \code{\link[stats]{qpois}}, and is most efficient when truncation removes
+little probability mass.
 }
+All three methods produce samples confined to \code{[a, b]}.
 }
 \examples{
 # Generate random samples from a zero-truncated Poisson distribution (ZTP)
@@ -76,6 +81,11 @@ Nadarajah, S. and Kotz, S. (2006).
 \dQuote{R Programs for Computing Truncated Distributions}
 \emph{Journal of Statistical Software}
 \url{https://www.jstatsoft.org/v16/c02/}
+}
+\seealso{
+\code{\link{qtruncpois}} used internally by \code{method = "inversion"}.
+\code{\link{dtruncpois}}, \code{\link{ptruncpois}} for the PMF and CDF.
+\code{\link[stats]{rpois}} for the untruncated Poisson sampler.
 }
 \author{
 Arun Sundar Paulraj and Keefe Murphy

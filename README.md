@@ -14,8 +14,8 @@
 ## Description
 
 `truncpois` provides a complete suite of distribution functions for the
-truncated Poisson distribution, supporting both left-truncation,
-right-truncation, and doubly truncated forms. Truncation bounds are
+truncated Poisson distribution, supporting left-truncation,
+right-truncation, and doubly-truncated forms. Truncation bounds are
 interpreted as `a <= X <= b`. All core computations are carried out on
 the log scale for numerical stability, making the package reliable
 across a wide range of rate parameters and truncation configurations.
@@ -26,25 +26,18 @@ for the cumulative distribution function; `qtruncpois`, for quantiles;
 and `rtruncpois`, for generating random samples via inverse-CDF or
 bounded rejection sampling. Distributional moments are provided by
 `extruncpois` for the theoretical mean, `vartruncpois` for variance,
-`mtruncpois` for the median, and `mode_truncpois` for the mode.
+`medtruncpois` for the median, and `modtruncpois` for the mode.
 
 ## Installation
 
-You can install the latest stable official release of `truncpois` from
-CRAN:
-
-``` r
-install.packages("truncpois")
-```
-
-or the development version from GitHub:
+You can install the development version of `truncpois` from GitHub:
 
 ``` r
 # install.packages("pak")
 pak::pak("arunsundar022/truncpois")
 ```
 
-In either case, you can then explore the package with:
+You can then explore the package with:
 
 ``` r
 library(truncpois)
@@ -58,15 +51,12 @@ follows:
 vignette("truncpois", package = "truncpois")
 ```
 
-However, if the package is installed from GitHub, the vignette is not
-automatically built. It can be included when installing from GitHub
-with:
+If the vignette is not automatically built when installing from GitHub,
+include it explicitly:
 
 ``` r
 devtools::install_github("arunsundar022/truncpois", build_vignettes = TRUE)
 ```
-
-Alternatively, the vignette is available on the package’s CRAN page.
 
 ## Quick Example
 
@@ -98,6 +88,17 @@ round(data.frame(x = x, p_pois = p_pois, p_trunc = p_trunc), 4)
 #> 13 12 0.0034  0.0000
 ```
 
+``` r
+barplot(rbind(Poisson = p_pois, Truncated = p_trunc),
+        beside = TRUE, names.arg = x,
+        col = c("grey70", "steelblue"),
+        ylab = "Probability", xlab = "x",
+        main = "PMF: Poisson(5) vs TruncPois(5, b=8)",
+        legend.text = c("Poisson(5)", "TruncPois(5, b=8)"))
+```
+
+<img src="man/figures/README-pmf-plot-1.png" width="100%" />
+
 Generate random draws from a doubly truncated Poisson distribution:
 
 ``` r
@@ -126,15 +127,16 @@ Compute median and mode of truncated distributions:
 
 ``` r
 # Median of a doubly truncated Poisson
-mtruncpois(lambda = 4, a = 2, b = 9)
+medtruncpois(lambda = 4, a = 2, b = 9)
 #> [1] 4
 
 # Mode of a doubly truncated Poisson (may return multiple values)
-mode_truncpois(lambda = 4, a = 2, b = 9)
+modtruncpois(lambda = 4, a = 2, b = 9)
+#> Warning: The mode is not unique: 2 tied values returned.
 #> [1] 3 4
 
 # Mode with potential ties (lambda between two integers)
-mode_truncpois(lambda = 2.5, a = 0, b = 10)
+modtruncpois(lambda = 2.5, a = 0, b = 10)
 #> [1] 2
 ```
 

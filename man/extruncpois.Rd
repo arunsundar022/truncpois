@@ -9,15 +9,16 @@ extruncpois(lambda, a = 0L, b = Inf)
 \arguments{
 \item{lambda}{Positive numeric scalar, the mean parameter of the Poisson distribution.}
 
-\item{a}{Lower truncation bound (inclusive). Default is \code{a = 0}.}
+\item{a}{Non-negative integer lower truncation bound (inclusive). Default is \code{a = 0}.}
 
-\item{b}{Upper truncation bound (inclusive). Default is \code{b = Inf}.}
+\item{b}{Strictly positive integer upper truncation bound (inclusive), or \code{Inf}.
+Default is \code{b = Inf}.}
 }
 \value{
 A single positive numeric value representing the expected value.
 }
 \description{
-Compute the expected value of a truncated poisson distribution
+Compute the expected value of a truncated Poisson distribution.
 }
 \details{
 Compute the expected value of a truncated Poisson distribution,
@@ -30,9 +31,11 @@ This implementation adapts the continuous truncated distribution framework of
 Nadarajah and Kotz (2006) to the discrete Poisson setting.
 Key differences include:
 \itemize{
-\item All internal calculations are performed on the log-scale for numerical stability
-\item The normalizing constant is computed as log-difference of the cumulative probabilities
-rather than densities
+\item The mean is computed using a closed-form formula derived from the
+recurrence relation of the Poisson distribution, not numerical integration.
+\item All internal calculations are performed on the log-scale for numerical stability.
+\item The normalizing constant is computed as the log-difference of cumulative
+probabilities (\code{\link[stats]{ppois}}) evaluated at the truncation bounds.
 }
 }
 \examples{
@@ -43,6 +46,7 @@ extruncpois(lambda_val, a = 1) # > 2
 # Examine how the mean changes as the upper bound increases
 bounds <- 1:10
 means <- sapply(bounds, function(b) extruncpois(lambda = 5, a = 0, b = b))
+means
 
 # Plot demonstrating convergence to the untruncated mean
 plot(bounds, means, type = "b", pch = 19, col = "blue",
@@ -55,6 +59,10 @@ Nadarajah, S. and Kotz, S. (2006).
 \dQuote{R Programs for Computing Truncated Distributions}
 \emph{Journal of Statistical Software}
 \url{https://www.jstatsoft.org/v16/c02/}
+}
+\seealso{
+\code{\link{vartruncpois}}, \code{\link{medtruncpois}}, \code{\link{modtruncpois}}
+for the variance, median, and mode.
 }
 \author{
 Arun Sundar Paulraj and Keefe Murphy

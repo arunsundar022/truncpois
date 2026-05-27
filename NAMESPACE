@@ -2,8 +2,8 @@
 
 export(dtruncpois)
 export(extruncpois)
-export(mode_truncpois)
-export(mtruncpois)
+export(medtruncpois)
+export(modtruncpois)
 export(plot_truncpois)
 export(ptruncpois)
 export(qtruncpois)

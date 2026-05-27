@@ -9,15 +9,16 @@ vartruncpois(lambda, a = 0L, b = Inf)
 \arguments{
 \item{lambda}{Positive numeric scalar, the mean parameter of the Poisson distribution.}
 
-\item{a}{Lower truncation bound (inclusive). Default is \code{a = 0}.}
+\item{a}{Non-negative integer lower truncation bound (inclusive). Default is \code{a = 0}.}
 
-\item{b}{Upper truncation bound (inclusive). Default is \code{b = Inf}.}
+\item{b}{Strictly positive integer upper truncation bound (inclusive), or \code{Inf}.
+Default is \code{b = Inf}.}
 }
 \value{
 A single non-negative numeric value representing the variance.
 }
 \description{
-Compute the variance of a truncated poisson distribution
+Compute the variance of a truncated Poisson distribution.
 }
 \details{
 Compute the variance of a truncated Poisson distribution,
@@ -33,25 +34,25 @@ This implementation adapts the continuous truncated distribution framework of
 Nadarajah and Kotz (2006) to the discrete Poisson setting.
 Key differences include:
 \itemize{
-\item All internal calculations are performed on the log-scale for numerical stability
-\item The normalizing constant is computed as log-difference of the cumulative probabilities
-rather than densities
+\item The variance is computed using a closed-form formula via
+\eqn{E[X^2] - E[X]^2}, with the second moment derived from the Poisson
+recurrence — no numerical integration is used.
+\item All internal calculations are performed on the log-scale for numerical stability.
+\item The normalizing constant is computed as the log-difference of cumulative
+probabilities (\code{\link[stats]{ppois}}) evaluated at the truncation bounds.
 }
 }
 \examples{
 # Poisson distribution has variance == mean.
 # Truncation reduces the variance (underdispersion).
 lambda_val <- 5
-untrunc_var <- lambda_val
-trunc_var <- vartruncpois(lambda_val, b = 6)
-
-cat("Untruncated Variance:", untrunc_var, "\n")
-cat("Truncated Variance  :", trunc_var, "\n")
+c("Untruncated variance" = lambda_val,
+  "Truncated variance [0, 6]" = vartruncpois(lambda_val, b = 6))
 
 # Verify computationally with a large sample simulation
 set.seed(42)
 samples <- rtruncpois(10000, lambda = 5, b = 6)
-var(samples) # Should be close to trunc_var
+var(samples) # Should be close to vartruncpois(5, b = 6)
 }
 \references{
 Nadarajah, S. and Kotz, S. (2006).
@@ -61,6 +62,7 @@ Nadarajah, S. and Kotz, S. (2006).
 }
 \seealso{
 \code{\link{extruncpois}} for the corresponding mean.
+\code{\link{medtruncpois}}, \code{\link{modtruncpois}} for the median and mode.
 }
 \author{
 Arun Sundar Paulraj and Keefe Murphy
