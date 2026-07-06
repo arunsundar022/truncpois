@@ -34,8 +34,6 @@ Key differences include:
 \item The mean is computed using a closed-form formula derived from the
 recurrence relation of the Poisson distribution, not numerical integration.
 \item All internal calculations are performed on the log-scale for numerical stability.
-\item The normalizing constant is computed as the log-difference of cumulative
-probabilities (\code{\link[stats]{ppois}}) evaluated at the truncation bounds.
 }
 }
 \examples{

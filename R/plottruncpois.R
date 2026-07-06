@@ -1,22 +1,24 @@
 #' Plot a Truncated Poisson Distribution
 #'
-#' Plot the probability mass function (PMF) or cumulative distribution function
-#' (CDF) of a truncated Poisson distribution, optionally overlaying the
-#' untruncated Poisson for comparison.
+#' Plot the probability mass function (PMF), cumulative distribution function
+#' (CDF), or quantile function of a truncated Poisson distribution, optionally
+#' overlaying the untruncated Poisson for comparison.
 #'
 #' @param lambda Positive numeric scalar, the mean parameter of the Poisson distribution.
 #' @param a Non-negative integer lower truncation bound (inclusive). Default is \code{a = 0}.
 #' @param b Strictly positive integer upper truncation bound (inclusive), or \code{Inf}.
 #'   Default is \code{b = Inf}.
-#' @param type Character string; one of \code{"pmf"} (default) or \code{"cdf"}.
+#' @param type Character string; one of \code{"pmf"} (default), \code{"cdf"}, or \code{"quantile"}.
 #' @param compare Logical; if \code{TRUE} (default), overlay the untruncated
 #'   Poisson distribution for comparison.
 #' @param ... Additional graphical parameters passed to \code{\link[graphics]{barplot}}
-#'   (for \code{type = "pmf"}) or \code{\link[graphics]{plot}} (for \code{type = "cdf"}).
+#'   (for \code{type = "pmf"}) or \code{\link[graphics]{plot}} (for \code{type = "cdf"}
+#'   or \code{type = "quantile"}).
 #'
-#' @return Invisibly returns a list with elements \code{x} (support values),
-#'   \code{truncated} (truncated distribution values), and \code{untruncated}
-#'   (untruncated Poisson values, or \code{NULL} if \code{compare = FALSE}).
+#' @return Invisibly returns a list with elements \code{x} (support values, or
+#'   probabilities for \code{type = "quantile"}), \code{truncated} (truncated
+#'   distribution values), and \code{untruncated} (untruncated Poisson values,
+#'   or \code{NULL} if \code{compare = FALSE}).
 #'
 #' @note
 #' When \code{compare = TRUE}, the axis limits are chosen to cover both the
@@ -36,16 +38,19 @@
 #'
 #' @examples
 #' # Plot PMF comparing truncated and untruncated Poisson
-#' plot_truncpois(lambda = 5, b = 8)
+#' plottruncpois(lambda = 5, b = 8)
 #'
 #' # Plot CDF of a zero-truncated Poisson (x-axis starts at 0 to show truncation)
-#' plot_truncpois(lambda = 3, a = 1, type = "cdf")
+#' plottruncpois(lambda = 3, a = 1, type = "cdf")
+#'
+#' # Plot the quantile function, comparing truncated and untruncated Poisson
+#' plottruncpois(lambda = 5, a = 2, b = 10, type = "quantile")
 #'
 #' # Plot PMF without comparison overlay
-#' plot_truncpois(lambda = 4, a = 2, b = 9, compare = FALSE)
-plot_truncpois <- function(lambda, a = 0L, b = Inf,
-                           type = c("pmf", "cdf"),
-                           compare = TRUE, ...) {
+#' plottruncpois(lambda = 4, a = 2, b = 9, compare = FALSE)
+plottruncpois <- function(lambda, a = 0L, b = Inf,
+                          type = c("pmf", "cdf", "quantile"),
+                          compare = TRUE, ...) {
   .check_truncpois_bounds(a, b)
   .check_lambda(lambda)
   type <- match.arg(type)
@@ -84,7 +89,11 @@ plot_truncpois <- function(lambda, a = 0L, b = Inf,
     }
     do.call(graphics::barplot, c(args, list(...)))
 
-  } else {
+    return(invisible(list(x = if (compare) x_full else x_trunc,
+                           truncated = y_trunc,
+                           untruncated = if (compare) y_untrunc else NULL)))
+
+  } else if (type == "cdf") {
     x_cdf     <- seq(0, qhi)
     y_trunc   <- ptruncpois(x_cdf, lambda, a = a, b = b)
     y_untrunc <- if (compare) stats::ppois(x_cdf, lambda) else NULL
@@ -103,9 +112,33 @@ plot_truncpois <- function(lambda, a = 0L, b = Inf,
                        col = c("steelblue", "grey50"),
                        lwd = 2, lty = c(1, 2), bty = "n")
     }
-  }
 
-  invisible(list(x = if (type == "pmf" && compare) x_full else if (type == "pmf") x_trunc else x_cdf,
-                 truncated  = y_trunc,
-                 untruncated = if (compare) y_untrunc else NULL))
+    return(invisible(list(x = x_cdf,
+                           truncated = y_trunc,
+                           untruncated = if (compare) y_untrunc else NULL)))
+
+  } else {
+    p_grid    <- seq(1e-3, 1 - 1e-3, length.out = 200)
+    y_trunc   <- qtruncpois(p_grid, lambda, a = a, b = b)
+    y_untrunc <- if (compare) stats::qpois(p_grid, lambda) else NULL
+
+    plot(p_grid, y_trunc, type = "s", col = "steelblue", lwd = 2,
+         ylim = range(c(y_trunc, y_untrunc)),
+         ylab = "Quantile", xlab = "p",
+         main = paste0("Quantile Function: TruncPois(lambda=", lambda,
+                       ", a=", a, ", b=", b, ")"), ...)
+    if (compare) {
+      graphics::lines(p_grid, y_untrunc, type = "s", col = "grey50",
+                      lwd = 2, lty = 2)
+      graphics::legend("bottomright",
+                       legend = c(paste0("TruncPois(", lambda, ")"),
+                                  paste0("Poisson(", lambda, ")")),
+                       col = c("steelblue", "grey50"),
+                       lwd = 2, lty = c(1, 2), bty = "n")
+    }
+
+    return(invisible(list(x = p_grid,
+                           truncated = y_trunc,
+                           untruncated = if (compare) y_untrunc else NULL)))
+  }
 }

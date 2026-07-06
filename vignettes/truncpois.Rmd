@@ -9,6 +9,7 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
   %\VignetteDepends{LaplacesDemon}
+  %\VignetteDepends{microbenchmark}
 ---
 
 ```{r setup, include=FALSE}
@@ -74,16 +75,7 @@ round(rbind(x = x, Poisson = p_pois, Truncated = p_trunc), 4)
 Notice that `dtruncpois` returns 0 for $x < a = 2$ and $x > b = 10$, and the probabilities over the support $[2, 10]$ are rescaled so that they sum to 1 over the entire support.
 
 ```{r pmf-plot, fig.height=4.5}
-barplot(
-  rbind(Poisson = p_pois, Truncated = p_trunc),
-  beside    = TRUE,
-  names.arg = x,
-  col       = c("grey70", "steelblue"),
-  ylab      = "Probability",
-  xlab      = "x",
-  main      = expression("PMF: Poisson(5) vs TruncPois(5, a=2, b=10)"),
-  legend.text = c("Poisson(5)", "TruncPois(5, a=2, b=10)")
-)
+plottruncpois(lambda = 5, a = 2, b = 10)
 ```
 
 The `log = TRUE` argument returns log-probabilities for numerical work involving very large $\lambda$ or wide truncation windows:
@@ -105,13 +97,7 @@ round(rbind(q = q, Poisson = cdf_pois, Truncated = cdf_trunc), 4)
 ```
 
 ```{r cdf-plot, fig.height=4.5}
-plot(q, cdf_trunc, type = "s", col = "steelblue", lwd = 2,
-     ylim = c(0, 1), ylab = "Cumulative Probability", xlab = "q",
-     main = "CDF: Poisson(5) vs TruncPois(5, a=2, b=10)")
-lines(q, cdf_pois, type = "s", col = "grey50", lwd = 2, lty = 2)
-legend("bottomright",
-       legend = c("TruncPois(5, a=2, b=10)", "Poisson(5)"),
-       col = c("steelblue", "grey50"), lwd = 2, lty = c(1, 2), bty = "n")
+plottruncpois(lambda = 5, a = 2, b = 10, type = "cdf")
 ```
 
 The `lower.tail` and `log.p` arguments mirror the conventions of `ppois()`:
@@ -136,6 +122,12 @@ We can verify the round-trip property — the CDF evaluated at the returned quan
 ```{r quantile-roundtrip}
 cdf_at_q <- ptruncpois(q, lambda = 5, a = 2, b = 10)
 rbind(target_p = p, quantile = q, cdf_at_q = round(cdf_at_q, 4))
+```
+
+`plottruncpois()` also supports `type = "quantile"`, plotting the quantile function itself against the untruncated Poisson quantile function:
+
+```{r quantile-plot, fig.height=4.5}
+plottruncpois(lambda = 5, a = 2, b = 10, type = "quantile")
 ```
 
 ---
@@ -172,6 +164,20 @@ For a heavily truncated distribution where the support is wide, use `method = "i
 set.seed(42)
 samples <- rtruncpois(10, lambda = 100, a = 90, b = 110, method = "inversion")
 samples
+```
+
+### Comparing the runtimes of the three sampling methods
+
+The three sampling methods make different tradeoffs. `microbenchmark::microbenchmark()`
+lets us compare their runtimes directly for a given set of parameters:
+
+```{r random-microbenchmark, eval=requireNamespace("microbenchmark", quietly = TRUE)}
+microbenchmark::microbenchmark(
+  direct    = rtruncpois(1000, lambda = 3, a = 1, b = Inf, method = "direct"),
+  inversion = rtruncpois(1000, lambda = 3, a = 1, b = Inf, method = "inversion"),
+  bounded   = rtruncpois(1000, lambda = 3, a = 1, b = Inf, method = "bounded"),
+  times = 50
+)
 ```
 
 ---
@@ -241,7 +247,7 @@ modtruncpois(lambda = 2.5, a = 0, b = 10) # unique mode: floor(2.5) = 2
 ```
 
 ```{r mode-tie}
-modtruncpois(lambda = 5, a = 0, b = 10)   # tied modes at 4 and 5, warning issued
+modtruncpois(lambda = 5, a = 0, b = 10)   # lambda = 5 is an integer, so 4 and 5 tie
 ```
 
 When the untruncated mode falls outside $[a, b]$, the mode is clamped to the nearest bound:
@@ -252,13 +258,71 @@ modtruncpois(lambda = 1, a = 3, b = 10)   # clamped to a = 3
 
 ---
 
+## Putting It All Together
+
+This section ties the distribution, random generation, moment, and estimation
+functions together in a single workflow: simulate a sample from a known
+truncated Poisson distribution, recover its rate parameter with
+`mletruncpois()`, and check that the fitted distribution and its moments
+match the observed sample.
+
+```{r together-simulate}
+set.seed(2026)
+lambda_true <- 6
+a <- 2; b <- 15
+x <- rtruncpois(5000, lambda = lambda_true, a = a, b = b)
+
+fit <- mletruncpois(x, a = a, b = b)
+fit$lambda
+```
+
+The fitted `lambda` is close to the true generating value used above. We can
+now overlay the empirical sample proportions with the theoretical PMF
+evaluated at the fitted `lambda`:
+
+```{r together-plot, fig.height=4.5}
+support   <- a:b
+tab       <- table(factor(x, levels = support))
+emp_prop  <- as.numeric(tab) / length(x)
+theo_prop <- dtruncpois(support, lambda = fit$lambda, a = a, b = b)
+
+barplot(rbind(Empirical = emp_prop, Theoretical = theo_prop),
+        beside = TRUE, names.arg = support,
+        col = c("grey70", "steelblue"),
+        ylab = "Probability", xlab = "x",
+        main = "Sample vs Fitted Truncated Poisson PMF")
+legend("topright",
+       legend = c("Empirical", paste0("Theoretical (lambda=", round(fit$lambda, 2), ")")),
+       fill = c("grey70", "steelblue"), bty = "n")
+```
+
+Finally, we compare the sample mean, median, and mode against the
+corresponding closed-form moments evaluated at the fitted `lambda`:
+
+```{r together-moments}
+sample_mode <- as.numeric(names(tab)[which.max(tab)])
+
+comparison <- rbind(
+  Sample = c(mean = mean(x), median = stats::median(x), mode = sample_mode),
+  Theoretical = c(mean   = extruncpois(fit$lambda, a = a, b = b),
+                  median = medtruncpois(fit$lambda, a = a, b = b),
+                  mode   = suppressWarnings(modtruncpois(fit$lambda, a = a, b = b))[1])
+)
+round(comparison, 3)
+```
+
+The sample and fitted values line up closely, which is a good check that
+`rtruncpois()`, `mletruncpois()`, and the moment functions are all working
+together as expected.
+
+---
+
 ## Comparison with LaplacesDemon
 
 The `LaplacesDemon` package also provides a truncated Poisson distribution via
 `dtrunc()`, `ptrunc()`, `qtrunc()`, and `rtrunc()` with `spec = "pois"`.
-This section demonstrates two important limitations of that implementation that
-**truncpois** addresses, making it a meaningful advance over existing open-source
-software for the truncated Poisson distribution.
+It has two notable limitations, described below, that motivated some of the
+design choices in **truncpois**.
 
 ```{r laplacesdemon-setup}
 ld_available <- requireNamespace("LaplacesDemon", quietly = TRUE)
@@ -293,12 +357,10 @@ ptruncpois(7, lambda = 5, a = 2, b = 10, lower.tail = FALSE, log.p = TRUE)
 log(1 - LaplacesDemon::ptrunc(7, spec = "pois", a = 2, b = 10, lambda = 5))
 ```
 
-This manual approach is error-prone and, for extreme probabilities where
-$P(X \leq q)$ is very close to 1, suffers from catastrophic cancellation:
-the subtraction $1 - p$ loses all significant digits, producing an
-inaccurate log-probability. `truncpois` avoids this entirely by computing
-log-probabilities directly using numerically stable `log1p` and `expm1`
-arithmetic throughout.
+This manual workaround is risky: when $P(X \leq q)$ is very close to 1, the
+subtraction $1 - p$ loses precision (catastrophic cancellation), giving an
+inaccurate log-probability. `truncpois` avoids this by computing
+log-probabilities directly with `log1p` and `expm1`, so no precision is lost.
 
 Similarly, `qtruncpois()` accepts `log.p = TRUE` and `lower.tail = FALSE`,
 while `LaplacesDemon::qtrunc()` does not:
@@ -323,23 +385,22 @@ which is both slow and introduces sampling variability. **truncpois** provides
 exact closed-form results for all four moments:
 
 ```{r laplacesdemon-moments, eval=ld_available}
-# Exact closed-form moments from truncpois (deterministic, no approximation error)
+# truncpois: exact, closed-form
 extruncpois(lambda = 5, a = 2, b = 10)
 vartruncpois(lambda = 5, a = 2, b = 10)
 medtruncpois(lambda = 5, a = 2, b = 10)
 suppressWarnings(modtruncpois(lambda = 5, a = 2, b = 10))
 
-# LaplacesDemon: no equivalent -- simulation is the only option
+# LaplacesDemon has no equivalent, so we simulate instead
 set.seed(42)
 samp <- LaplacesDemon::rtrunc(100000, spec = "pois", a = 2, b = 10, lambda = 5)
 mean(samp)   # approximation -- varies with sample size and seed
 var(samp)    # approximation -- varies with sample size and seed
 ```
 
-The simulation approach has non-zero sampling error, scales poorly for extreme
-truncation parameters, and cannot be used where reproducibility or analytical
-precision is required. `truncpois` returns the exact value in closed form for
-any $(\lambda, a, b)$.
+Simulation always carries some sampling error, and it gets worse for extreme
+truncation parameters or when exact, reproducible values are needed.
+`truncpois` avoids this by computing the moments directly in closed form.
 
 ---
 

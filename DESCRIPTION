@@ -18,6 +18,7 @@ License: GPL (>= 3)
 Suggests:
     knitr,
     LaplacesDemon,
+    microbenchmark,
     rmarkdown,
     testthat (>= 3.0.0)
 VignetteBuilder:
