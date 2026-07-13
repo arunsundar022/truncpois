@@ -127,7 +127,6 @@ extruncpois <- function(lambda, a = 0L, b = Inf) {
 #'   "Truncated variance [0, 6]" = vartruncpois(lambda_val, b = 6))
 #'
 #' # Verify computationally with a large sample simulation
-#' set.seed(42)
 #' samples <- rtruncpois(10000, lambda = 5, b = 6)
 #' var(samples) # Should be close to vartruncpois(5, b = 6)
 vartruncpois <- function(lambda, a = 0L, b = Inf) {

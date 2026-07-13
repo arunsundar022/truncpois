@@ -315,11 +315,14 @@ qtruncpois <- function(p, lambda, a = 0L, b = Inf,
 #'   Default is \code{b = Inf}.
 #' @param method Character string specifying the sampling algorithm. One of:
 #'   \describe{
-#'     \item{\code{"direct"}}{Enumerate the support and sample via
-#'       \code{\link[base]{sample}}. Fast when the support is small, but
-#'       fails for infinite or very wide supports.}
+#'     \item{\code{"direct"}}{Enumerates the support and samples via the
+#'       Gumbel-max trick. When \code{b = Inf}, extreme quantiles of the
+#'       untruncated distribution are used first to shrink the support to a
+#'       finite range, so this method remains usable even when the support
+#'       is unbounded.}
 #'     \item{\code{"inversion"}}{Inversion sampling via \code{\link{qtruncpois}}.
-#'       Works for any finite \code{lambda} regardless of support width.}
+#'       Works for any truncation bounds, finite or infinite, since it never
+#'       enumerates the support.}
 #'     \item{\code{"bounded"}}{Uniform-CDF inversion through the untruncated
 #'       Poisson CDF. Efficient when the truncation region covers most of the
 #'       probability mass.}
@@ -332,10 +335,14 @@ qtruncpois <- function(p, lambda, a = 0L, b = Inf,
 #' Three distinct sampling algorithms are provided to cover different parameter regimes:
 #' \itemize{
 #' \item \code{"direct"} uses the Gumbel-max trick to sample in one pass from the
-#'   enumerated support. It is fast when the support is small but requires finite bounds.
+#'   enumerated support. Even when \code{b = Inf}, extreme quantiles of the
+#'   untruncated distribution (via \code{\link[stats]{qpois}}) are used to shrink
+#'   the support to a finite range first, so this method does not actually require
+#'   finite bounds to be supplied by the user.
 #' \item \code{"inversion"} transforms uniform random variables through
-#'   \code{\link{qtruncpois}} and works for any finite \code{lambda} regardless of
-#'   support width.
+#'   \code{\link{qtruncpois}} and works for any truncation bounds, finite or
+#'   infinite, since it never enumerates the support (\eqn{\lambda} itself is
+#'   always finite).
 #' \item \code{"bounded"} performs CDF-inversion entirely within the truncation window
 #'   via \code{\link[stats]{qpois}}, and is most efficient when truncation removes
 #'   little probability mass.
@@ -360,7 +367,6 @@ qtruncpois <- function(p, lambda, a = 0L, b = Inf,
 #' @examples
 #' # Generate random samples from a zero-truncated Poisson distribution (ZTP)
 #' # ZTP is commonly used in count data models where zero is not observable
-#' set.seed(123)
 #' samples <- rtruncpois(1000, lambda = 2.5, a = 1)
 #' table(samples)
 #'
@@ -402,15 +408,15 @@ rtruncpois <- function(n, lambda, a = 0L, b = Inf,
            if (is.finite(lpa)) {
              log_u <- lpa + log1p(expm1(lpb - lpa) * stats::runif(n, 0, 1))
            } else {
-             log_u <- lpb + log(stats::runif(n))
+             log_u <- lpb - stats::rexp(n, rate = 1)
            }
            x <- stats::qpois(log_u, lambda, lower.tail = TRUE, log.p = TRUE)
          },
 
          direct = {
-           qlo <- stats::qpois(.Machine$double.eps, lambda,
+           qlo <- stats::qpois(sqrt(.Machine$double.eps), lambda,
                                lower.tail = TRUE,  log.p = FALSE)
-           qhi <- stats::qpois(.Machine$double.eps, lambda,
+           qhi <- stats::qpois(sqrt(.Machine$double.eps), lambda,
                                lower.tail = FALSE, log.p = FALSE)
            a_eff   <- max(a, qlo)
            b_eff   <- min(b, qhi)

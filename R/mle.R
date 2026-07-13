@@ -6,7 +6,7 @@
 #' The log-likelihood \eqn{\sum_i \log f(x_i \mid \lambda, a, b)}, with \eqn{f}
 #' the truncated Poisson PMF (\code{\link{dtruncpois}}), is maximized over
 #' \eqn{\lambda} using one-dimensional numerical optimization
-#' (\code{\link[stats]{optimize}}).
+#' (\code{\link[stats]{optimize}}, which uses Brent's method).
 #'
 #' @param x Numeric vector of observed integer counts, each within \code{[a, b]}.
 #' @param a Non-negative integer lower truncation bound (inclusive). Default is \code{a = 0}.
@@ -17,13 +17,19 @@
 #'   \code{mean(x)}.
 #'
 #' @return A list with elements \code{lambda} (the maximum likelihood estimate),
-#'   \code{loglik} (the log-likelihood at that estimate), and \code{n}
-#'   (the sample size).
+#'   \code{loglik} (the log-likelihood at that estimate), \code{se} (the standard
+#'   error of the estimate, obtained from the observed information via
+#'   \code{\link[numDeriv]{hessian}}), and \code{n} (the sample size).
 #'
 #' @note
 #' The estimate is obtained by direct numerical maximization of the exact,
 #' closed-form truncated Poisson log-likelihood (via \code{\link{dtruncpois}}),
-#' not by method-of-moments or simulation-based approaches.
+#' not by method-of-moments or simulation-based approaches. Equivalently,
+#' \code{\link[stats]{optimize}} minimizes the negative log-likelihood. The
+#' standard error is derived from the curvature of the negative log-likelihood
+#' at the estimate: \code{se = sqrt(1 / H)}, where \code{H} is the (scalar)
+#' Hessian of the negative log-likelihood evaluated at \code{lambda}, computed
+#' via \code{\link[numDeriv]{hessian}}.
 #'
 #' @seealso
 #' \code{\link{dtruncpois}} for the density being maximized.
@@ -38,11 +44,12 @@
 #'
 #' @author Arun Sundar Paulraj and Keefe Murphy
 #'
+#' @importFrom numDeriv hessian
+#'
 #' @export
 #'
 #' @examples
 #' # Simulate a zero-truncated Poisson sample and recover lambda
-#' set.seed(1)
 #' x <- rtruncpois(2000, lambda = 6, a = 1)
 #' fit <- mletruncpois(x, a = 1)
 #' fit
@@ -50,6 +57,12 @@
 #' # Compare the fitted lambda to the sample mean-based theoretical mean
 #' extruncpois(fit$lambda, a = 1)
 #' mean(x)
+#'
+#' # Compare the empirical proportions to the PMF evaluated at the estimate
+#' plot(prop.table(table(x)), type = "h")
+#' lines(0:max(x) + 0.1,
+#'       dtruncpois(0:max(x), lambda = 6, a = 1),
+#'       type = "h", col = "red")
 mletruncpois <- function(x, a = 0L, b = Inf, interval = NULL) {
   .check_truncpois_bounds(a, b)
   if (!is.numeric(x) || length(x) < 1L)
@@ -65,5 +78,8 @@ mletruncpois <- function(x, a = 0L, b = Inf, interval = NULL) {
   negloglik <- function(lambda) -sum(dtruncpois(x, lambda, a = a, b = b, log = TRUE))
   fit <- stats::optimize(negloglik, interval = interval)
 
-  list(lambda = fit$minimum, loglik = -fit$objective, n = length(x))
+  H  <- numDeriv::hessian(negloglik, fit$minimum)
+  se <- sqrt(1 / H[1, 1])
+
+  list(lambda = fit$minimum, loglik = -fit$objective, se = se, n = length(x))
 }

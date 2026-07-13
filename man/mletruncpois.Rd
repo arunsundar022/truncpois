@@ -20,8 +20,9 @@ Default is \code{b = Inf}.}
 }
 \value{
 A list with elements \code{lambda} (the maximum likelihood estimate),
-\code{loglik} (the log-likelihood at that estimate), and \code{n}
-(the sample size).
+\code{loglik} (the log-likelihood at that estimate), \code{se} (the standard
+error of the estimate, obtained from the observed information via
+\code{\link[numDeriv]{hessian}}), and \code{n} (the sample size).
 }
 \description{
 Estimate the rate parameter \eqn{\lambda} of a truncated Poisson distribution
@@ -31,16 +32,20 @@ from a sample of observed counts, given known truncation bounds.
 The log-likelihood \eqn{\sum_i \log f(x_i \mid \lambda, a, b)}, with \eqn{f}
 the truncated Poisson PMF (\code{\link{dtruncpois}}), is maximized over
 \eqn{\lambda} using one-dimensional numerical optimization
-(\code{\link[stats]{optimize}}).
+(\code{\link[stats]{optimize}}, which uses Brent's method).
 }
 \note{
 The estimate is obtained by direct numerical maximization of the exact,
 closed-form truncated Poisson log-likelihood (via \code{\link{dtruncpois}}),
-not by method-of-moments or simulation-based approaches.
+not by method-of-moments or simulation-based approaches. Equivalently,
+\code{\link[stats]{optimize}} minimizes the negative log-likelihood. The
+standard error is derived from the curvature of the negative log-likelihood
+at the estimate: \code{se = sqrt(1 / H)}, where \code{H} is the (scalar)
+Hessian of the negative log-likelihood evaluated at \code{lambda}, computed
+via \code{\link[numDeriv]{hessian}}.
 }
 \examples{
 # Simulate a zero-truncated Poisson sample and recover lambda
-set.seed(1)
 x <- rtruncpois(2000, lambda = 6, a = 1)
 fit <- mletruncpois(x, a = 1)
 fit
@@ -48,6 +53,12 @@ fit
 # Compare the fitted lambda to the sample mean-based theoretical mean
 extruncpois(fit$lambda, a = 1)
 mean(x)
+
+# Compare the empirical proportions to the PMF evaluated at the estimate
+plot(prop.table(table(x)), type = "h")
+lines(0:max(x) + 0.1,
+      dtruncpois(0:max(x), lambda = 6, a = 1),
+      type = "h", col = "red")
 }
 \references{
 Nadarajah, S. and Kotz, S. (2006).
