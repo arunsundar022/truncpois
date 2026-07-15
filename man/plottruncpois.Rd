@@ -45,7 +45,12 @@ overlaying the untruncated Poisson for comparison.
 When \code{compare = TRUE}, the axis limits are chosen to cover both the
 truncated and untruncated distributions, so the effect of truncation is
 always visible. For \code{type = "cdf"}, the x-axis starts at 0 regardless
-of \code{a}, so that left-truncation is apparent.
+of \code{a}, so that left-truncation is apparent. Internally,
+\code{plottruncpois()} always calls \code{\link{dtruncpois}},
+\code{\link{ptruncpois}}, and \code{\link{qtruncpois}} with their
+\code{log}, \code{log.p}, and \code{lower.tail} arguments left at their
+defaults (\code{FALSE}, \code{FALSE}, and \code{TRUE} respectively, where
+applicable); these are not exposed as arguments to this function.
 }
 \examples{
 # Plot PMF comparing truncated and untruncated Poisson

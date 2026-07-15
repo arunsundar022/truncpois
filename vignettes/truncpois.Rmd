@@ -41,6 +41,8 @@ The __truncpois__ package provides a complete suite of functions for the truncat
 | `vartruncpois()` | Variance |
 | `medtruncpois()` | Median |
 | `modtruncpois()` | Mode |
+| `mletruncpois()` | Maximum likelihood estimation of the rate parameter |
+| `plottruncpois()` | Visualize the PMF, CDF, or quantile function |
 
 All functions accept `a` (lower truncation bound, inclusive, default `0`) and `b` (upper truncation bound, inclusive, default `Inf`). All internal computations are performed on the log-scale for numerical stability, following the framework of Nadarajah and Kotz (2006).
 
@@ -65,14 +67,14 @@ library(truncpois)
 `dtruncpois(x, lambda, a, b)` evaluates the PMF at integer values `x`. With default bounds (`a = 0`, `b = Inf`) it reduces to the standard `dpois()`.
 
 ```{r pmf-table}
-x          <- 0:12
-p_pois     <- stats::dpois(x, lambda = 5)
-p_trunc    <- dtruncpois(x, lambda = 5, a = 2, b = 10)
+x <- 0:12
+p_pois <- stats::dpois(x, lambda = 5)
+p_trunc <- dtruncpois(x, lambda = 5, a = 2, b = 10)
 
 round(rbind(x = x, Poisson = p_pois, Truncated = p_trunc), 4)
 ```
 
-Notice that `dtruncpois` returns 0 for $x < a = 2$ and $x > b = 10$, and the probabilities over the support $[2, 10]$ are rescaled so that they sum to 1 over the entire support.
+Notice that `dtruncpois` returns 0 for $x < a = 2$ and $x > b = 10$. When evaluated across the *entire* truncated support $[2, 10]$, as above, the probabilities sum to 1; evaluating at only a subset of the support (e.g. `x <- 4:8`) would not sum to 1, since the normalizing constant already accounts for the full $[a, b]$ range.
 
 ```{r pmf-plot, fig.height=4.5}
 plottruncpois(lambda = 5, a = 2, b = 10)
@@ -89,9 +91,9 @@ dtruncpois(100, lambda = 100, a = 50, b = 150, log = TRUE)
 `ptruncpois(q, lambda, a, b)` computes $P(X \leq q \mid a \leq X \leq b)$. The CDF reaches exactly 1 at the upper bound $b$ and is 0 for $q < a$.
 
 ```{r cdf-table}
-q          <- 0:12
-cdf_pois   <- stats::ppois(q, lambda = 5)
-cdf_trunc  <- ptruncpois(q, lambda = 5, a = 2, b = 10)
+q <- 0:12
+cdf_pois <- stats::ppois(q, lambda = 5)
+cdf_trunc <- ptruncpois(q, lambda = 5, a = 2, b = 10)
 
 round(rbind(q = q, Poisson = cdf_pois, Truncated = cdf_trunc), 4)
 ```
@@ -130,6 +132,14 @@ rbind(target_p = p, quantile = q, cdf_at_q = round(cdf_at_q, 4))
 plottruncpois(lambda = 5, a = 2, b = 10, type = "quantile")
 ```
 
+### Visualizing Distributions
+
+`plottruncpois(lambda, a, b, type, compare)` is a single convenience function covering all three plots shown above (`type = "pmf"`, `"cdf"`, or `"quantile"`), with `compare = TRUE` by default overlaying the corresponding untruncated Poisson distribution. Setting `compare = FALSE` shows only the truncated distribution:
+
+```{r plottruncpois-nocompare, fig.height=4.5}
+plottruncpois(lambda = 5, a = 2, b = 10, compare = FALSE)
+```
+
 ---
 
 ## Random Generation
@@ -142,23 +152,23 @@ plottruncpois(lambda = 5, a = 2, b = 10, type = "quantile")
 
 ```{r random-gen}
 set.seed(2026)
-x_direct    <- rtruncpois(1000, lambda = 3, a = 1, b = Inf, method = "direct")
+x_direct <- rtruncpois(1000, lambda = 3, a = 1, b = Inf, method = "direct")
 x_inversion <- rtruncpois(1000, lambda = 3, a = 1, b = Inf, method = "inversion")
-x_bounded   <- rtruncpois(1000, lambda = 3, a = 1, b = Inf, method = "bounded")
+x_bounded <- rtruncpois(1000, lambda = 3, a = 1, b = Inf, method = "bounded")
 ```
 
 All three methods produce samples entirely within $[a, b]$ and converge to the same distribution:
 
 ```{r random-compare}
 rbind(
-  direct     = c(min = min(x_direct),    max = max(x_direct),    mean = mean(x_direct)),
-  inversion  = c(min = min(x_inversion), max = max(x_inversion), mean = mean(x_inversion)),
-  bounded    = c(min = min(x_bounded),   max = max(x_bounded),   mean = mean(x_bounded)),
-  theoretical = c(min = NA, max = NA,    mean = extruncpois(3, a = 1))
+  direct = c(min = min(x_direct), max = max(x_direct), mean = mean(x_direct)),
+  inversion = c(min = min(x_inversion), max = max(x_inversion), mean = mean(x_inversion)),
+  bounded = c(min = min(x_bounded), max = max(x_bounded), mean = mean(x_bounded)),
+  theoretical = c(min = NA, max = NA, mean = extruncpois(3, a = 1))
 )
 ```
 
-For a heavily truncated distribution where the support is wide, use `method = "inversion"` to avoid the finite-support requirement of `"direct"`:
+Since `method = "direct"` (the default) uses extreme quantiles of the untruncated distribution to shrink the support to a finite working range, it remains usable even when `b = Inf`. The `"inversion"` and `"bounded"` methods work identically regardless of the width or finiteness of `[a, b]`, since neither ever enumerates the support directly — `"inversion"` is a simple, transparent alternative whenever that's preferred:
 
 ```{r random-large-lambda}
 set.seed(42)
@@ -173,9 +183,9 @@ lets us compare their runtimes directly for a given set of parameters:
 
 ```{r random-microbenchmark, eval=requireNamespace("microbenchmark", quietly = TRUE)}
 microbenchmark::microbenchmark(
-  direct    = rtruncpois(1000, lambda = 3, a = 1, b = Inf, method = "direct"),
+  direct = rtruncpois(1000, lambda = 3, a = 1, b = Inf, method = "direct"),
   inversion = rtruncpois(1000, lambda = 3, a = 1, b = Inf, method = "inversion"),
-  bounded   = rtruncpois(1000, lambda = 3, a = 1, b = Inf, method = "bounded"),
+  bounded = rtruncpois(1000, lambda = 3, a = 1, b = Inf, method = "bounded"),
   times = 50
 )
 ```
@@ -186,7 +196,7 @@ microbenchmark::microbenchmark(
 
 ### Mean
 
-`extruncpois(lambda, a, b)` computes $E[X \mid a \leq X \leq b]$ entirely on the log-scale. For the zero-truncated Poisson ($a = 1$), the mean is always strictly greater than $\lambda$:
+`extruncpois(lambda, a, b)` computes $E[X \mid a \leq X \leq b]$ entirely on the log-scale. For the zero-truncated Poisson, with $a = 1$, the mean is always strictly greater than $\lambda$:
 
 ```{r mean-ztp}
 lambda_val <- 2
@@ -197,15 +207,19 @@ As the upper bound $b$ increases toward infinity, the truncated mean converges t
 
 ```{r mean-convergence, fig.height=4.5}
 bounds <- 1:15
-means  <- sapply(bounds, function(b) extruncpois(lambda = 5, a = 0, b = b))
+means <- sapply(bounds, function(b) extruncpois(lambda = 5, a = 0, b = b))
 
-plot(bounds, means, type = "b", pch = 19, col = "steelblue",
-     ylab = "E[X | 0 <= X <= b]", xlab = "Upper Bound b",
-     main = "Mean of Right-Truncated Poisson(λ=5) vs Upper Bound")
+plot(bounds, means,
+  type = "b", pch = 19, col = "steelblue",
+  ylab = "E[X | 0 <= X <= b]", xlab = "Upper Bound b",
+  main = "Mean of Right-Truncated Poisson(λ=5) vs Upper Bound"
+)
 abline(h = 5, lty = 2, col = "firebrick", lwd = 1.5)
-legend("bottomright", legend = c("Truncated mean", "λ = 5"),
-       col = c("steelblue", "firebrick"), pch = c(19, NA),
-       lty = c(1, 2), bty = "n")
+legend("bottomright",
+  legend = c("Truncated mean", "λ = 5"),
+  col = c("steelblue", "firebrick"), pch = c(19, NA),
+  lty = c(1, 2), bty = "n"
+)
 ```
 
 ### Variance
@@ -214,8 +228,10 @@ legend("bottomright", legend = c("Truncated mean", "λ = 5"),
 
 ```{r variance}
 lambda_val <- 5
-c("Untruncated variance (= lambda)" = lambda_val,
-  "Truncated variance [2, 8]"       = vartruncpois(lambda_val, a = 2, b = 8))
+c(
+  "Untruncated variance (= lambda)" = lambda_val,
+  "Truncated variance [2, 8]" = vartruncpois(lambda_val, a = 2, b = 8)
+)
 ```
 
 We can verify this computationally via a large simulation:
@@ -223,8 +239,10 @@ We can verify this computationally via a large simulation:
 ```{r variance-sim}
 set.seed(99)
 samples <- rtruncpois(20000, lambda = 5, a = 2, b = 8)
-c("Simulated variance"   = round(var(samples), 4),
-  "Theoretical variance" = round(vartruncpois(5, a = 2, b = 8), 4))
+c(
+  "Simulated variance" = round(var(samples), 4),
+  "Theoretical variance" = round(vartruncpois(5, a = 2, b = 8), 4)
+)
 ```
 
 ### Median
@@ -232,10 +250,12 @@ c("Simulated variance"   = round(var(samples), 4),
 `medtruncpois(lambda, a, b)` returns the median using log-scale inversion of the midpoint CDF value. The median is guaranteed to lie within $[a, b]$:
 
 ```{r median}
-c("Median (default bounds)" = medtruncpois(lambda = 5),
-  "Median [1, Inf]"         = medtruncpois(lambda = 3, a = 1),
-  "Median [2, 10]"          = medtruncpois(lambda = 5, a = 2, b = 10),
-  "Median (low lambda=0.5)" = medtruncpois(lambda = 0.5, a = 0, b = 5))
+c(
+  "Median (default bounds)" = medtruncpois(lambda = 5),
+  "Median [1, Inf]" = medtruncpois(lambda = 3, a = 1),
+  "Median [2, 10]" = medtruncpois(lambda = 5, a = 2, b = 10),
+  "Median (low lambda=0.5)" = medtruncpois(lambda = 0.5, a = 0, b = 5)
+)
 ```
 
 ### Mode
@@ -247,13 +267,13 @@ modtruncpois(lambda = 2.5, a = 0, b = 10) # unique mode: floor(2.5) = 2
 ```
 
 ```{r mode-tie}
-modtruncpois(lambda = 5, a = 0, b = 10)   # lambda = 5 is an integer, so 4 and 5 tie
+modtruncpois(lambda = 5, a = 0, b = 10) # lambda = 5 is an integer, so 4 and 5 tie
 ```
 
 When the untruncated mode falls outside $[a, b]$, the mode is clamped to the nearest bound:
 
 ```{r mode-clamped}
-modtruncpois(lambda = 1, a = 3, b = 10)   # clamped to a = 3
+modtruncpois(lambda = 1, a = 3, b = 10) # clamped to a = 3
 ```
 
 ---
@@ -269,7 +289,8 @@ match the observed sample.
 ```{r together-simulate}
 set.seed(2026)
 lambda_true <- 6
-a <- 2; b <- 15
+a <- 2
+b <- 15
 x <- rtruncpois(5000, lambda = lambda_true, a = a, b = b)
 
 fit <- mletruncpois(x, a = a, b = b)
@@ -281,19 +302,21 @@ now overlay the empirical sample proportions with the theoretical PMF
 evaluated at the fitted `lambda`:
 
 ```{r together-plot, fig.height=4.5}
-support   <- a:b
-tab       <- table(factor(x, levels = support))
-emp_prop  <- as.numeric(tab) / length(x)
+support <- a:b
+tab <- table(factor(x, levels = support))
+emp_prop <- as.numeric(tab) / length(x)
 theo_prop <- dtruncpois(support, lambda = fit$lambda, a = a, b = b)
 
 barplot(rbind(Empirical = emp_prop, Theoretical = theo_prop),
-        beside = TRUE, names.arg = support,
-        col = c("grey70", "steelblue"),
-        ylab = "Probability", xlab = "x",
-        main = "Sample vs Fitted Truncated Poisson PMF")
+  beside = TRUE, names.arg = support,
+  col = c("grey70", "steelblue"),
+  ylab = "Probability", xlab = "x",
+  main = "Sample vs Fitted Truncated Poisson PMF"
+)
 legend("topright",
-       legend = c("Empirical", paste0("Theoretical (lambda=", round(fit$lambda, 2), ")")),
-       fill = c("grey70", "steelblue"), bty = "n")
+  legend = c("Empirical", paste0("Theoretical (lambda=", round(fit$lambda, 2), ")")),
+  fill = c("grey70", "steelblue"), bty = "n"
+)
 ```
 
 Finally, we compare the sample mean, median, and mode against the
@@ -304,9 +327,11 @@ sample_mode <- as.numeric(names(tab)[which.max(tab)])
 
 comparison <- rbind(
   Sample = c(mean = mean(x), median = stats::median(x), mode = sample_mode),
-  Theoretical = c(mean   = extruncpois(fit$lambda, a = a, b = b),
-                  median = medtruncpois(fit$lambda, a = a, b = b),
-                  mode   = suppressWarnings(modtruncpois(fit$lambda, a = a, b = b))[1])
+  Theoretical = c(
+    mean = extruncpois(fit$lambda, a = a, b = b),
+    median = medtruncpois(fit$lambda, a = a, b = b),
+    mode = suppressWarnings(modtruncpois(fit$lambda, a = a, b = b))[1]
+  )
 )
 round(comparison, 3)
 ```
@@ -394,8 +419,8 @@ suppressWarnings(modtruncpois(lambda = 5, a = 2, b = 10))
 # LaplacesDemon has no equivalent, so we simulate instead
 set.seed(42)
 samp <- LaplacesDemon::rtrunc(100000, spec = "pois", a = 2, b = 10, lambda = 5)
-mean(samp)   # approximation -- varies with sample size and seed
-var(samp)    # approximation -- varies with sample size and seed
+mean(samp) # approximation -- varies with sample size and seed
+var(samp) # approximation -- varies with sample size and seed
 ```
 
 Simulation always carries some sampling error, and it gets worse for extreme

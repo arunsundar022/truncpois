@@ -44,8 +44,10 @@ recurrence — no numerical integration is used.
 # Poisson distribution has variance == mean.
 # Truncation reduces the variance (underdispersion).
 lambda_val <- 5
-c("Untruncated variance" = lambda_val,
-  "Truncated variance [0, 6]" = vartruncpois(lambda_val, b = 6))
+c(
+  "Untruncated variance" = lambda_val,
+  "Truncated variance [0, 6]" = vartruncpois(lambda_val, b = 6)
+)
 
 # Verify computationally with a large sample simulation
 samples <- rtruncpois(10000, lambda = 5, b = 6)

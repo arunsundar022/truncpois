@@ -50,10 +50,13 @@ p_trunc <- dtruncpois(x, lambda = 5, b = 10)
 round(rbind(x, p_pois, p_trunc), 3)
 
 # Plotting the comparison
-barplot(rbind(p_pois, p_trunc), beside = TRUE, names.arg = x,
-        col = c("gray", "blue"),
-        main = "Standard vs Truncated Poisson PMF",
-        legend.text = c("Poisson(5)", "TruncPoisson(5, b=10)"))
+barplot(rbind(p_pois, p_trunc),
+  beside = TRUE, names.arg = x,
+  col = c("gray", "blue"),
+  main = "Standard vs Truncated Poisson PMF",
+  legend.text = c("Poisson(5)", "TruncPoisson(5, b=10)"),
+  args.legend = list(inset = 0.025)
+)
 
 # Log-scale computation for large lambdas and wide bounds to prevent underflow
 dtruncpois(100, lambda = 100, a = 50, b = 150, log = TRUE)

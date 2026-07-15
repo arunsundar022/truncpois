@@ -49,9 +49,11 @@
 #' means
 #'
 #' # Plot demonstrating convergence to the untruncated mean
-#' plot(bounds, means, type = "b", pch = 19, col = "blue",
-#'      ylab = "Expected Value", xlab = "Upper Bound (b)",
-#'      main = "Expected Value of Right-Truncated Poisson(lambda=5)")
+#' plot(bounds, means,
+#'   type = "b", pch = 19, col = "blue",
+#'   ylab = "Expected Value", xlab = "Upper Bound (b)",
+#'   main = "Expected Value of Right-Truncated Poisson(lambda=5)"
+#' )
 #' abline(h = 5, lty = 2, col = "red") # Untruncated mean
 extruncpois <- function(lambda, a = 0L, b = Inf) {
   .check_truncpois_bounds(a, b)
@@ -65,14 +67,14 @@ extruncpois <- function(lambda, a = 0L, b = Inf) {
   #   w <- exp(probs - max(probs))
   #   return(sum(support * w) / sum(w))
   # } else {
-    a_adj <- a - 1L
-    log_denom <- .log_denom_truncpois(a_adj, b, lambda)
-    log_num <- .log_diff(
-      stats::ppois(b - 1L, lambda, log.p = TRUE, lower.tail = TRUE),
-      stats::ppois(a_adj - 1L, lambda, log.p = TRUE, lower.tail = TRUE)
-    )
-    return(exp(log(lambda) + log_num - log_denom))
-  #}
+  a_adj <- a - 1L
+  log_denom <- .log_denom_truncpois(a_adj, b, lambda)
+  log_num <- .log_diff(
+    stats::ppois(b - 1L, lambda, log.p = TRUE, lower.tail = TRUE),
+    stats::ppois(a_adj - 1L, lambda, log.p = TRUE, lower.tail = TRUE)
+  )
+  return(exp(log(lambda) + log_num - log_denom))
+  # }
 }
 
 #' Truncated Poisson Variance
@@ -123,8 +125,10 @@ extruncpois <- function(lambda, a = 0L, b = Inf) {
 #' # Poisson distribution has variance == mean.
 #' # Truncation reduces the variance (underdispersion).
 #' lambda_val <- 5
-#' c("Untruncated variance" = lambda_val,
-#'   "Truncated variance [0, 6]" = vartruncpois(lambda_val, b = 6))
+#' c(
+#'   "Untruncated variance" = lambda_val,
+#'   "Truncated variance [0, 6]" = vartruncpois(lambda_val, b = 6)
+#' )
 #'
 #' # Verify computationally with a large sample simulation
 #' samples <- rtruncpois(10000, lambda = 5, b = 6)
@@ -143,17 +147,17 @@ vartruncpois <- function(lambda, a = 0L, b = Inf) {
   #   ex2 <- sum((support^2) * w) / sum(w)
   #   return(ex2 - mu^2)
   # } else {
-    a_adj <- a - 1L
-    log_denom <- .log_denom_truncpois(a_adj, b, lambda)
-    mu <- extruncpois(lambda, a, b)
-    log_fac_num <- .log_diff(
-      stats::ppois(b - 2L, lambda, log.p = TRUE, lower.tail = TRUE),
-      stats::ppois(a_adj - 2L, lambda, log.p = TRUE, lower.tail = TRUE)
-    )
+  a_adj <- a - 1L
+  log_denom <- .log_denom_truncpois(a_adj, b, lambda)
+  mu <- extruncpois(lambda, a, b)
+  log_fac_num <- .log_diff(
+    stats::ppois(b - 2L, lambda, log.p = TRUE, lower.tail = TRUE),
+    stats::ppois(a_adj - 2L, lambda, log.p = TRUE, lower.tail = TRUE)
+  )
 
-    ex2 <- exp(2 * log(lambda) + log_fac_num - log_denom) + mu
-    return(ex2 - mu^2)
-  #}
+  ex2 <- exp(2 * log(lambda) + log_fac_num - log_denom) + mu
+  return(ex2 - mu^2)
+  # }
 }
 #' Truncated Poisson Median
 #'
@@ -209,7 +213,7 @@ medtruncpois <- function(lambda, a = 0L, b = Inf) {
 
   a_adj <- a - 1L
   log_p_lower <- ptruncpois(a_adj, lambda, a = a, b = b, lower.tail = TRUE, log.p = TRUE)
-  log_p_upper <- ptruncpois(b,     lambda, a = a, b = b, lower.tail = TRUE, log.p = TRUE)
+  log_p_upper <- ptruncpois(b, lambda, a = a, b = b, lower.tail = TRUE, log.p = TRUE)
   log_p_median <- .log_sum(log_p_lower, log_p_upper) - log(2)
 
   return(qtruncpois(log_p_median, lambda, a = a, b = b, lower.tail = TRUE, log.p = TRUE))
@@ -270,7 +274,8 @@ modtruncpois <- function(lambda, a = 0L, b = Inf) {
 
   untruncated_modes <- unique(c(ceiling(lambda) - 1, floor(lambda)))
   modes <- as.integer(sort(unique(pmin(b, pmax(a, untruncated_modes)))))
-  if (length(modes) > 1L)
+  if (length(modes) > 1L) {
     warning("The mode is not unique: ", length(modes), " tied values returned.", call. = FALSE)
+  }
   return(modes)
 }

@@ -1,17 +1,19 @@
 test_that("dtruncpois sums to 1 over support", {
-  lambda <- 3; a <- 1; b <- 10
+  lambda <- 3
+  a <- 1
+  b <- 10
   x <- a:b
   expect_equal(sum(dtruncpois(x, lambda, a, b)), 1)
 })
 
 test_that("dtruncpois returns 0 outside [a, b]", {
-  expect_equal(dtruncpois(0,  lambda = 3, a = 1, b = 10), 0)
+  expect_equal(dtruncpois(0, lambda = 3, a = 1, b = 10), 0)
   expect_equal(dtruncpois(11, lambda = 3, a = 1, b = 10), 0)
 })
 
 test_that("dtruncpois log=TRUE is consistent with log=FALSE", {
   x <- 1:8
-  d  <- dtruncpois(x, lambda = 4, a = 1, b = 8, log = FALSE)
+  d <- dtruncpois(x, lambda = 4, a = 1, b = 8, log = FALSE)
   dl <- dtruncpois(x, lambda = 4, a = 1, b = 8, log = TRUE)
   expect_equal(log(d), dl)
 })
@@ -19,12 +21,15 @@ test_that("dtruncpois log=TRUE is consistent with log=FALSE", {
 test_that("dtruncpois with default bounds matches dpois", {
   x <- 0:15
   expect_equal(dtruncpois(x, lambda = 5), stats::dpois(x, lambda = 5),
-               tolerance = 1e-12)
+    tolerance = 1e-12
+  )
 })
 
 test_that("dtruncpois issues warning when lambda length mismatches x", {
-  expect_warning(dtruncpois(1:4, lambda = c(1, 2, 3), a = 0, b = Inf),
-                 "'lambda' length")
+  expect_warning(
+    dtruncpois(1:4, lambda = c(1, 2, 3), a = 0, b = Inf),
+    "'lambda' length"
+  )
 })
 
 test_that("dtruncpois stops for non-numeric x", {
@@ -48,7 +53,8 @@ test_that("ptruncpois is non-decreasing", {
 test_that("ptruncpois with default bounds matches ppois", {
   q <- 0:12
   expect_equal(ptruncpois(q, lambda = 5), stats::ppois(q, lambda = 5),
-               tolerance = 1e-12)
+    tolerance = 1e-12
+  )
 })
 
 test_that("ptruncpois lower.tail=FALSE is complement of lower.tail=TRUE", {
@@ -60,7 +66,7 @@ test_that("ptruncpois lower.tail=FALSE is complement of lower.tail=TRUE", {
 
 test_that("ptruncpois log.p=TRUE is consistent with log.p=FALSE", {
   q <- 2:7
-  p  <- ptruncpois(q, lambda = 4, a = 1, b = 8, log.p = FALSE)
+  p <- ptruncpois(q, lambda = 4, a = 1, b = 8, log.p = FALSE)
   pl <- ptruncpois(q, lambda = 4, a = 1, b = 8, log.p = TRUE)
   expect_equal(log(p), pl, tolerance = 1e-12)
 })
@@ -74,8 +80,8 @@ test_that("qtruncpois is right inverse of ptruncpois", {
 
 test_that("qtruncpois with log.p=TRUE gives same result as log.p=FALSE", {
   p <- c(0.1, 0.5, 0.9)
-  q1 <- qtruncpois(p,        lambda = 4, a = 1, b = 10, log.p = FALSE)
-  q2 <- qtruncpois(log(p),   lambda = 4, a = 1, b = 10, log.p = TRUE)
+  q1 <- qtruncpois(p, lambda = 4, a = 1, b = 10, log.p = FALSE)
+  q2 <- qtruncpois(log(p), lambda = 4, a = 1, b = 10, log.p = TRUE)
   expect_equal(q1, q2)
 })
 
@@ -86,7 +92,7 @@ test_that("qtruncpois with default bounds matches qpois", {
 
 test_that("qtruncpois stops for out-of-range p", {
   expect_error(qtruncpois(-0.1, lambda = 3, a = 0, b = Inf))
-  expect_error(qtruncpois(1.1,  lambda = 3, a = 0, b = Inf))
+  expect_error(qtruncpois(1.1, lambda = 3, a = 0, b = Inf))
 })
 
 test_that("rtruncpois returns values within [a, b]", {
@@ -105,7 +111,7 @@ test_that("rtruncpois large-sample mean converges to extruncpois", {
 
 test_that("rtruncpois returns correct length", {
   expect_length(rtruncpois(10, lambda = 2), 10)
-  expect_length(rtruncpois(0,  lambda = 2), 0)
+  expect_length(rtruncpois(0, lambda = 2), 0)
 })
 
 test_that("rtruncpois stops for non-scalar n", {

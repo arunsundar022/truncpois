@@ -15,6 +15,7 @@ Description: Provides functions for the left-truncated, right-truncated,
     (vartruncpois), median (medtruncpois), and mode (modtruncpois) of the
     truncated Poisson distribution.
 License: GPL (>= 3)
+URL: https://github.com/arunsundar022/truncpois
 Imports:
     numDeriv
 Suggests:
@@ -27,6 +28,5 @@ VignetteBuilder:
     knitr
 Encoding: UTF-8
 Language: en-GB
-LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
+Config/roxygen2/version: 8.0.0

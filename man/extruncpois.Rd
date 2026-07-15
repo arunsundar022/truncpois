@@ -47,9 +47,11 @@ means <- sapply(bounds, function(b) extruncpois(lambda = 5, a = 0, b = b))
 means
 
 # Plot demonstrating convergence to the untruncated mean
-plot(bounds, means, type = "b", pch = 19, col = "blue",
-     ylab = "Expected Value", xlab = "Upper Bound (b)",
-     main = "Expected Value of Right-Truncated Poisson(lambda=5)")
+plot(bounds, means,
+  type = "b", pch = 19, col = "blue",
+  ylab = "Expected Value", xlab = "Upper Bound (b)",
+  main = "Expected Value of Right-Truncated Poisson(lambda=5)"
+)
 abline(h = 5, lty = 2, col = "red") # Untruncated mean
 }
 \references{

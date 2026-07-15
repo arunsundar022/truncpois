@@ -60,8 +60,10 @@ qtruncpois(log(p), lambda = 10, a = 5, b = 15, log.p = TRUE)
 qtruncpois(p, lambda = 10, a = 5, b = 15, lower.tail = FALSE)
 
 # Upper-tail quantiles supplied as log-probabilities
-qtruncpois(log(p), lambda = 10, a = 5, b = 15,
-           lower.tail = FALSE, log.p = TRUE)
+qtruncpois(log(p),
+  lambda = 10, a = 5, b = 15,
+  lower.tail = FALSE, log.p = TRUE
+)
 }
 \references{
 Nadarajah, S. and Kotz, S. (2006).

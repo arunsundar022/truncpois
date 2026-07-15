@@ -51,10 +51,13 @@
 #' round(rbind(x, p_pois, p_trunc), 3)
 #'
 #' # Plotting the comparison
-#' barplot(rbind(p_pois, p_trunc), beside = TRUE, names.arg = x,
-#'         col = c("gray", "blue"),
-#'         main = "Standard vs Truncated Poisson PMF",
-#'         legend.text = c("Poisson(5)", "TruncPoisson(5, b=10)"))
+#' barplot(rbind(p_pois, p_trunc),
+#'   beside = TRUE, names.arg = x,
+#'   col = c("gray", "blue"),
+#'   main = "Standard vs Truncated Poisson PMF",
+#'   legend.text = c("Poisson(5)", "TruncPoisson(5, b=10)"),
+#'   args.legend = list(inset = 0.025)
+#' )
 #'
 #' # Log-scale computation for large lambdas and wide bounds to prevent underflow
 #' dtruncpois(100, lambda = 100, a = 50, b = 150, log = TRUE)
@@ -65,18 +68,23 @@
 dtruncpois <- function(x, lambda, a = 0L, b = Inf, log = FALSE) {
   .check_truncpois_bounds(a, b)
   .check_lambda(lambda)
-  if (!is.numeric(x))
+  if (!is.numeric(x)) {
     stop("'x' must be numeric", call. = FALSE)
-  if (!is.logical(log) || length(log) != 1L)
+  }
+  if (!is.logical(log) || length(log) != 1L) {
     stop("'log' must be a single logical", call. = FALSE)
+  }
 
   len <- length(x)
-  if (length(lambda) != 1L && length(lambda) != len)
+  if (length(lambda) != 1L && length(lambda) != len) {
     warning("'lambda' length (", length(lambda), ") not equal to 1 or length(x) (", len, "), recycling may occur", call. = FALSE)
-  if (length(a) != 1L && length(a) != len)
+  }
+  if (length(a) != 1L && length(a) != len) {
     warning("'a' length (", length(a), ") not equal to 1 or length(x) (", len, "), recycling may occur", call. = FALSE)
-  if (length(b) != 1L && length(b) != len)
+  }
+  if (length(b) != 1L && length(b) != len) {
     warning("'b' length (", length(b), ") not equal to 1 or length(x) (", len, "), recycling may occur", call. = FALSE)
+  }
 
   a <- rep(a, length.out = len)
   b <- rep(b, length.out = len)
@@ -89,7 +97,11 @@ dtruncpois <- function(x, lambda, a = 0L, b = Inf, log = FALSE) {
   valid <- x > a_adj & x <= b & x == floor(x)
   dens[valid] <- stats::dpois(x[valid], lambda[valid], log = TRUE) - log_denom[valid]
 
-  if (log) return(dens) else return(exp(dens))
+  if (log) {
+    return(dens)
+  } else {
+    return(exp(dens))
+  }
 }
 
 #' Truncated Poisson Distribution Function
@@ -159,20 +171,26 @@ ptruncpois <- function(q, lambda, a = 0L, b = Inf,
                        lower.tail = TRUE, log.p = FALSE) {
   .check_truncpois_bounds(a, b)
   .check_lambda(lambda)
-  if (!is.numeric(q))
+  if (!is.numeric(q)) {
     stop("'q' must be numeric", call. = FALSE)
-  if (!is.logical(lower.tail) || length(lower.tail) != 1L)
+  }
+  if (!is.logical(lower.tail) || length(lower.tail) != 1L) {
     stop("'lower.tail' must be a single logical", call. = FALSE)
-  if (!is.logical(log.p) || length(log.p) != 1L)
+  }
+  if (!is.logical(log.p) || length(log.p) != 1L) {
     stop("'log.p' must be a single logical", call. = FALSE)
+  }
 
   len <- length(q)
-  if (length(lambda) != 1L && length(lambda) != len)
+  if (length(lambda) != 1L && length(lambda) != len) {
     warning("'lambda' length (", length(lambda), ") not equal to 1 or length(q) (", len, "), recycling may occur", call. = FALSE)
-  if (length(a) != 1L && length(a) != len)
+  }
+  if (length(a) != 1L && length(a) != len) {
     warning("'a' length (", length(a), ") not equal to 1 or length(q) (", len, "), recycling may occur", call. = FALSE)
-  if (length(b) != 1L && length(b) != len)
+  }
+  if (length(b) != 1L && length(b) != len) {
     warning("'b' length (", length(b), ") not equal to 1 or length(q) (", len, "), recycling may occur", call. = FALSE)
+  }
 
   a <- rep(a, length.out = len)
   b <- rep(b, length.out = len)
@@ -192,7 +210,11 @@ ptruncpois <- function(q, lambda, a = 0L, b = Inf,
   ) - log_denom[mid]
 
   if (!lower.tail) log_cdf <- .log1mexp(log_cdf)
-  if (log.p) return(log_cdf) else return(exp(log_cdf))
+  if (log.p) {
+    return(log_cdf)
+  } else {
+    return(exp(log_cdf))
+  }
 }
 
 #' Truncated Poisson Quantile Function
@@ -257,26 +279,34 @@ ptruncpois <- function(q, lambda, a = 0L, b = Inf,
 #' qtruncpois(p, lambda = 10, a = 5, b = 15, lower.tail = FALSE)
 #'
 #' # Upper-tail quantiles supplied as log-probabilities
-#' qtruncpois(log(p), lambda = 10, a = 5, b = 15,
-#'            lower.tail = FALSE, log.p = TRUE)
+#' qtruncpois(log(p),
+#'   lambda = 10, a = 5, b = 15,
+#'   lower.tail = FALSE, log.p = TRUE
+#' )
 qtruncpois <- function(p, lambda, a = 0L, b = Inf,
                        lower.tail = TRUE, log.p = FALSE) {
   .check_truncpois_bounds(a, b)
   .check_lambda(lambda)
-  if (!is.numeric(p))
+  if (!is.numeric(p)) {
     stop("'p' must be numeric", call. = FALSE)
-  if (!is.logical(lower.tail) || length(lower.tail) != 1L)
+  }
+  if (!is.logical(lower.tail) || length(lower.tail) != 1L) {
     stop("'lower.tail' must be a single logical", call. = FALSE)
-  if (!is.logical(log.p) || length(log.p) != 1L)
+  }
+  if (!is.logical(log.p) || length(log.p) != 1L) {
     stop("'log.p' must be a single logical", call. = FALSE)
+  }
 
   len <- length(p)
-  if (length(lambda) != 1L && length(lambda) != len)
+  if (length(lambda) != 1L && length(lambda) != len) {
     warning("'lambda' length (", length(lambda), ") not equal to 1 or length(p) (", len, "), recycling may occur", call. = FALSE)
-  if (length(a) != 1L && length(a) != len)
+  }
+  if (length(a) != 1L && length(a) != len) {
     warning("'a' length (", length(a), ") not equal to 1 or length(p) (", len, "), recycling may occur", call. = FALSE)
-  if (length(b) != 1L && length(b) != len)
+  }
+  if (length(b) != 1L && length(b) != len) {
     warning("'b' length (", length(b), ") not equal to 1 or length(p) (", len, "), recycling may occur", call. = FALSE)
+  }
 
   a <- rep(a, length.out = len)
   b <- rep(b, length.out = len)
@@ -284,12 +314,15 @@ qtruncpois <- function(p, lambda, a = 0L, b = Inf,
 
   if (log.p) {
     p <- if (lower.tail) p else .log1mexp(p)
-    if (any(p > 0))
+    if (any(p > 0)) {
       stop("'p' must be <= 0 when 'log.p' is TRUE", call. = FALSE)
+    }
   } else {
-    if (any(p < 0) || any(p > 1))
+    if (any(p < 0) || any(p > 1)) {
       stop("'p' must be in the range [0, 1] when 'log.p' is FALSE",
-           call. = FALSE)
+        call. = FALSE
+      )
+    }
     p <- if (lower.tail) log(p) else log1p(-p)
   }
 
@@ -383,49 +416,55 @@ rtruncpois <- function(n, lambda, a = 0L, b = Inf,
                        method = c("direct", "inversion", "bounded")) {
   .check_truncpois_bounds(a, b)
   .check_lambda(lambda)
-  if (!is.numeric(n) || length(n) != 1L || n < 0L || n != floor(n))
+  if (!is.numeric(n) || length(n) != 1L || n < 0L || n != floor(n)) {
     stop("'n' must be a single non-negative integer", call. = FALSE)
-  if (length(lambda) != 1L)
+  }
+  if (length(lambda) != 1L) {
     stop("'lambda' must be a single value", call. = FALSE)
-  if (length(a) != 1L)
+  }
+  if (length(a) != 1L) {
     stop("'a' must be a single value", call. = FALSE)
-  if (length(b) != 1L)
+  }
+  if (length(b) != 1L) {
     stop("'b' must be a single value", call. = FALSE)
-  if (!is.character(method))
+  }
+  if (!is.character(method)) {
     stop("'method' must be a single character string", call. = FALSE)
+  }
   method <- match.arg(method)
 
   switch(method,
-
-         inversion = {
-           x <- qtruncpois(-stats::rexp(n, rate = 1), lambda, a, b,
-                           lower.tail = TRUE, log.p = TRUE)
-         },
-
-         bounded = {
-           lpa <- stats::ppois(a - 1L, lambda, lower.tail = TRUE, log.p = TRUE)
-           lpb <- stats::ppois(b,      lambda, lower.tail = TRUE, log.p = TRUE)
-           if (is.finite(lpa)) {
-             log_u <- lpa + log1p(expm1(lpb - lpa) * stats::runif(n, 0, 1))
-           } else {
-             log_u <- lpb - stats::rexp(n, rate = 1)
-           }
-           x <- stats::qpois(log_u, lambda, lower.tail = TRUE, log.p = TRUE)
-         },
-
-         direct = {
-           qlo <- stats::qpois(sqrt(.Machine$double.eps), lambda,
-                               lower.tail = TRUE,  log.p = FALSE)
-           qhi <- stats::qpois(sqrt(.Machine$double.eps), lambda,
-                               lower.tail = FALSE, log.p = FALSE)
-           a_eff   <- max(a, qlo)
-           b_eff   <- min(b, qhi)
-           if (!is.finite(a_eff) || !is.finite(b_eff))
-             stop("Infinite support: try another 'method'", call. = FALSE)
-           support <- seq(ceiling(a_eff), floor(b_eff), by = 1L)
-           prob    <- dtruncpois(support, lambda, a, b, log = TRUE)
-           x       <- support[.gumbel_max(prob, n)]
-         }
+    inversion = {
+      x <- qtruncpois(-stats::rexp(n, rate = 1), lambda, a, b,
+        lower.tail = TRUE, log.p = TRUE
+      )
+    },
+    bounded = {
+      lpa <- stats::ppois(a - 1L, lambda, lower.tail = TRUE, log.p = TRUE)
+      lpb <- stats::ppois(b, lambda, lower.tail = TRUE, log.p = TRUE)
+      if (is.finite(lpa)) {
+        log_u <- lpa + log1p(expm1(lpb - lpa) * stats::runif(n, 0, 1))
+      } else {
+        log_u <- lpb - stats::rexp(n, rate = 1)
+      }
+      x <- stats::qpois(log_u, lambda, lower.tail = TRUE, log.p = TRUE)
+    },
+    direct = {
+      qlo <- stats::qpois(sqrt(.Machine$double.eps), lambda,
+        lower.tail = TRUE, log.p = FALSE
+      )
+      qhi <- stats::qpois(sqrt(.Machine$double.eps), lambda,
+        lower.tail = FALSE, log.p = FALSE
+      )
+      a_eff <- max(a, qlo)
+      b_eff <- min(b, qhi)
+      if (!is.finite(a_eff) || !is.finite(b_eff)) {
+        stop("Infinite support: try another 'method'", call. = FALSE)
+      }
+      support <- seq(ceiling(a_eff), floor(b_eff), by = 1L)
+      prob <- dtruncpois(support, lambda, a, b, log = TRUE)
+      x <- support[.gumbel_max(prob, n)]
+    }
   )
   return(x)
 }

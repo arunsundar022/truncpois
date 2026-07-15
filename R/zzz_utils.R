@@ -10,25 +10,29 @@
 }
 
 .log_sum <- function(x, y) {
-  ma     <- pmax(x, y)
+  ma <- pmax(x, y)
   result <- ma + log1p(exp(pmin(x, y) - ma))
   result[is.infinite(ma) & ma == -Inf] <- -Inf
   return(result)
 }
 
 .check_truncpois_bounds <- function(a, b) {
-  if (!is.numeric(a) || any(a < 0) || any(a != floor(a)))
+  if (!is.numeric(a) || any(a < 0) || any(a != floor(a))) {
     stop("'a' must be a non-negative integer", call. = FALSE)
-  if (!is.numeric(b) || any(b <= 0) || any(is.finite(b) & b != floor(b)))
+  }
+  if (!is.numeric(b) || any(b <= 0) || any(is.finite(b) & b != floor(b))) {
     stop("'b' must be a strictly positive integer (or Inf)", call. = FALSE)
-  if (any(a >= b))
+  }
+  if (any(a >= b)) {
     stop("Lower bound 'a' must be less than upper bound 'b'", call. = FALSE)
+  }
   invisible(NULL)
 }
 
 .check_lambda <- function(lambda) {
-  if (!is.numeric(lambda) || any(lambda <= 0))
+  if (!is.numeric(lambda) || any(lambda <= 0)) {
     stop("'lambda' must be positive and numeric", call. = FALSE)
+  }
   invisible(NULL)
 }
 

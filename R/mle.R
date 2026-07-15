@@ -49,36 +49,53 @@
 #' @export
 #'
 #' @examples
-#' # Simulate a zero-truncated Poisson sample and recover lambda
-#' x <- rtruncpois(2000, lambda = 6, a = 1)
-#' fit <- mletruncpois(x, a = 1)
+#' # Simulate a doubly-truncated Poisson sample and recover lambda
+#' lambda_true <- 6
+#' a <- 2
+#' b <- 15
+#' x <- rtruncpois(5000, lambda = lambda_true, a = a, b = b)
+#' fit <- mletruncpois(x, a = a, b = b)
 #' fit
 #'
 #' # Compare the fitted lambda to the sample mean-based theoretical mean
-#' extruncpois(fit$lambda, a = 1)
+#' extruncpois(fit$lambda, a = a, b = b)
 #' mean(x)
 #'
 #' # Compare the empirical proportions to the PMF evaluated at the estimate
-#' plot(prop.table(table(x)), type = "h")
-#' lines(0:max(x) + 0.1,
-#'       dtruncpois(0:max(x), lambda = 6, a = 1),
-#'       type = "h", col = "red")
+#' support   <- a:b
+#' tab       <- table(factor(x, levels = support))
+#' emp_prop  <- as.numeric(tab) / length(x)
+#' theo_prop <- dtruncpois(support, lambda = fit$lambda, a = a, b = b)
+#'
+#' barplot(rbind(Empirical = emp_prop, Theoretical = theo_prop),
+#'   beside = TRUE, names.arg = support,
+#'   col = c("grey70", "steelblue"),
+#'   ylab = "Probability", xlab = "x",
+#'   main = paste0("MLE Recovery: True lambda=", lambda_true,
+#'                 ", Fitted lambda=", round(fit$lambda, 3)),
+#'   legend.text = c("Empirical", "Theoretical (fitted lambda)"),
+#'   args.legend = list(x = "topright", inset = 0.025)
+#' )
 mletruncpois <- function(x, a = 0L, b = Inf, interval = NULL) {
   .check_truncpois_bounds(a, b)
-  if (!is.numeric(x) || length(x) < 1L)
+  if (!is.numeric(x) || length(x) < 1L) {
     stop("'x' must be a non-empty numeric vector", call. = FALSE)
-  if (any(x != floor(x)))
+  }
+  if (any(x != floor(x))) {
     stop("'x' must contain only integers", call. = FALSE)
-  if (any(x < a | x > b))
+  }
+  if (any(x < a | x > b)) {
     stop("'x' must lie within [a, b]", call. = FALSE)
+  }
 
-  if (is.null(interval))
+  if (is.null(interval)) {
     interval <- c(max(1e-6, mean(x) / 4), mean(x) * 4 + 1)
+  }
 
   negloglik <- function(lambda) -sum(dtruncpois(x, lambda, a = a, b = b, log = TRUE))
   fit <- stats::optimize(negloglik, interval = interval)
 
-  H  <- numDeriv::hessian(negloglik, fit$minimum)
+  H <- numDeriv::hessian(negloglik, fit$minimum)
   se <- sqrt(1 / H[1, 1])
 
   list(lambda = fit$minimum, loglik = -fit$objective, se = se, n = length(x))

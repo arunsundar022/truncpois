@@ -30,7 +30,7 @@ test_that("vartruncpois with default bounds equals lambda (Poisson variance = me
 test_that("truncation reduces variance", {
   lambda <- 5
   untrunc_var <- lambda
-  trunc_var   <- vartruncpois(lambda, a = 2, b = 8)
+  trunc_var <- vartruncpois(lambda, a = 2, b = 8)
   expect_lt(trunc_var, untrunc_var)
 })
 
@@ -47,14 +47,20 @@ test_that("medtruncpois result is within [a, b]", {
 })
 
 test_that("medtruncpois equals qtruncpois at p = 0.5", {
-  lambda <- 4; a <- 1; b <- 12
-  expect_equal(medtruncpois(lambda, a, b),
-               qtruncpois(0.5, lambda, a, b))
+  lambda <- 4
+  a <- 1
+  b <- 12
+  expect_equal(
+    medtruncpois(lambda, a, b),
+    qtruncpois(0.5, lambda, a, b)
+  )
 })
 
 test_that("medtruncpois with default bounds is consistent with qpois", {
-  expect_equal(medtruncpois(lambda = 3),
-               qtruncpois(0.5, lambda = 3))
+  expect_equal(
+    medtruncpois(lambda = 3),
+    qtruncpois(0.5, lambda = 3)
+  )
 })
 
 test_that("modtruncpois issues warning and returns two values for integer lambda", {

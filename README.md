@@ -16,17 +16,17 @@
 `truncpois` provides a complete suite of distribution functions for the
 truncated Poisson distribution, supporting left-truncation,
 right-truncation, and doubly-truncated forms. Truncation bounds are
-interpreted as `a <= X <= b`. All core computations are carried out on
-the log scale for numerical stability, making the package reliable
-across a wide range of rate parameters and truncation configurations.
+interpreted as `a <= X <= b`. All computations are carried out on the
+log scale for numerical stability.
 
-The most important functions in the **truncpois** package are:
-`dtruncpois`, for computing the probability mass function; `ptruncpois`,
-for the cumulative distribution function; `qtruncpois`, for quantiles;
-and `rtruncpois`, for generating random samples via inverse-CDF or
-bounded rejection sampling. Distributional moments are provided by
-`extruncpois` for the theoretical mean, `vartruncpois` for variance,
-`medtruncpois` for the median, and `modtruncpois` for the mode.
+The core functions are `dtruncpois()` (density), `ptruncpois()` (CDF),
+`qtruncpois()` (quantiles), and `rtruncpois()` (random generation).
+Alongside these, `extruncpois()`, `vartruncpois()`, `medtruncpois()`,
+and `modtruncpois()` give the mean, variance, median, and mode.
+`mletruncpois()` estimates the rate parameter (with standard error) from
+a sample of observed counts via maximum likelihood, and
+`plottruncpois()` visualizes the PMF, CDF, or quantile function of a
+truncated Poisson distribution against its non-truncated counterpart.
 
 ## Installation
 
@@ -68,7 +68,7 @@ Compare the standard Poisson and right-truncated Poisson PMFs:
 
 ``` r
 x <- 0:12
-p_pois  <- dpois(x, lambda = 5)
+p_pois <- dpois(x, lambda = 5)
 p_trunc <- dtruncpois(x, lambda = 5, a = 0, b = 8)
 
 round(data.frame(x = x, p_pois = p_pois, p_trunc = p_trunc), 4)
@@ -90,14 +90,15 @@ round(data.frame(x = x, p_pois = p_pois, p_trunc = p_trunc), 4)
 
 ``` r
 barplot(rbind(Poisson = p_pois, Truncated = p_trunc),
-        beside = TRUE, names.arg = x,
-        col = c("grey70", "steelblue"),
-        ylab = "Probability", xlab = "x",
-        main = "PMF: Poisson(5) vs TruncPois(5, b=8)",
-        legend.text = c("Poisson(5)", "TruncPois(5, b=8)"))
+  beside = TRUE, names.arg = x,
+  col = c("grey70", "steelblue"),
+  ylab = "Probability", xlab = "x",
+  main = "PMF: Poisson(5) vs TruncPois(5, b=8)",
+  legend.text = c("Poisson(5)", "TruncPois(5, b=8)")
+)
 ```
 
-<img src="man/figures/README-pmf-plot-1.png" width="100%" />
+<img src="man/figures/README-pmf-plot-1.png" alt="" width="100%" />
 
 Generate random draws from a doubly truncated Poisson distribution:
 
@@ -112,13 +113,17 @@ table(samples)
 Compare empirical and theoretical moments:
 
 ``` r
-c(empirical_mean    = mean(samples),
-  theoretical_mean  = extruncpois(4, a = 2, b = 9))
+c(
+  empirical_mean = mean(samples),
+  theoretical_mean = extruncpois(4, a = 2, b = 9)
+)
 #>   empirical_mean theoretical_mean 
 #>          4.24500          4.26672
 
-c(empirical_var     = var(samples),
-  theoretical_var   = vartruncpois(4, a = 2, b = 9))
+c(
+  empirical_var = var(samples),
+  theoretical_var = vartruncpois(4, a = 2, b = 9)
+)
 #>   empirical_var theoretical_var 
 #>        2.961937        2.925129
 ```
@@ -126,16 +131,15 @@ c(empirical_var     = var(samples),
 Compute median and mode of truncated distributions:
 
 ``` r
-# Median of a doubly truncated Poisson
 medtruncpois(lambda = 4, a = 2, b = 9)
 #> [1] 4
 
-# Mode of a doubly truncated Poisson (may return multiple values)
+# Mode with tied values (lambda = 4 is an integer)
 modtruncpois(lambda = 4, a = 2, b = 9)
 #> Warning: The mode is not unique: 2 tied values returned.
 #> [1] 3 4
 
-# Mode with potential ties (lambda between two integers)
+# Unique mode (lambda = 2.5 is non-integer)
 modtruncpois(lambda = 2.5, a = 0, b = 10)
 #> [1] 2
 ```

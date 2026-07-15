@@ -45,20 +45,33 @@ Hessian of the negative log-likelihood evaluated at \code{lambda}, computed
 via \code{\link[numDeriv]{hessian}}.
 }
 \examples{
-# Simulate a zero-truncated Poisson sample and recover lambda
-x <- rtruncpois(2000, lambda = 6, a = 1)
-fit <- mletruncpois(x, a = 1)
+# Simulate a doubly-truncated Poisson sample and recover lambda
+lambda_true <- 6
+a <- 2
+b <- 15
+x <- rtruncpois(5000, lambda = lambda_true, a = a, b = b)
+fit <- mletruncpois(x, a = a, b = b)
 fit
 
 # Compare the fitted lambda to the sample mean-based theoretical mean
-extruncpois(fit$lambda, a = 1)
+extruncpois(fit$lambda, a = a, b = b)
 mean(x)
 
 # Compare the empirical proportions to the PMF evaluated at the estimate
-plot(prop.table(table(x)), type = "h")
-lines(0:max(x) + 0.1,
-      dtruncpois(0:max(x), lambda = 6, a = 1),
-      type = "h", col = "red")
+support   <- a:b
+tab       <- table(factor(x, levels = support))
+emp_prop  <- as.numeric(tab) / length(x)
+theo_prop <- dtruncpois(support, lambda = fit$lambda, a = a, b = b)
+
+barplot(rbind(Empirical = emp_prop, Theoretical = theo_prop),
+  beside = TRUE, names.arg = support,
+  col = c("grey70", "steelblue"),
+  ylab = "Probability", xlab = "x",
+  main = paste0("MLE Recovery: True lambda=", lambda_true,
+                ", Fitted lambda=", round(fit$lambda, 3)),
+  legend.text = c("Empirical", "Theoretical (fitted lambda)"),
+  args.legend = list(x = "topright", inset = 0.025)
+)
 }
 \references{
 Nadarajah, S. and Kotz, S. (2006).
