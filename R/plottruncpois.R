@@ -59,6 +59,7 @@ plottruncpois <- function(lambda, a = 0L, b = Inf,
   .check_truncpois_bounds(a, b)
   .check_lambda(lambda)
   type <- match.arg(type)
+  dots <- list(...)
 
   qlo <- stats::qpois(.Machine$double.eps, lambda, lower.tail = TRUE, log.p = FALSE)
   qhi <- stats::qpois(.Machine$double.eps, lambda, lower.tail = FALSE, log.p = FALSE)
@@ -72,6 +73,10 @@ plottruncpois <- function(lambda, a = 0L, b = Inf,
   if (type == "pmf") {
     y_trunc <- dtruncpois(x_trunc, lambda, a = a, b = b)
     y_untrunc <- if (compare) stats::dpois(x_full, lambda) else NULL
+    default_main <- paste0(
+      "PMF: TruncPois(lambda=", lambda,
+      ", a=", a, ", b=", b, ")"
+    )
 
     if (compare) {
       y_trunc_full <- dtruncpois(x_full, lambda, a = a, b = b)
@@ -82,10 +87,6 @@ plottruncpois <- function(lambda, a = 0L, b = Inf,
         col = c("grey70", "steelblue"),
         ylim = c(0, ylim_max * 1.05),
         ylab = "Probability", xlab = "x",
-        main = paste0(
-          "PMF: TruncPois(lambda=", lambda,
-          ", a=", a, ", b=", b, ")"
-        ),
         legend.text = c(
           paste0("Poisson(", lambda, ")"),
           paste0("TruncPois(", lambda, ")")
@@ -95,14 +96,11 @@ plottruncpois <- function(lambda, a = 0L, b = Inf,
       args <- list(
         height = y_trunc,
         col = "steelblue", names.arg = x_trunc,
-        ylab = "Probability", xlab = "x",
-        main = paste0(
-          "PMF: TruncPois(lambda=", lambda,
-          ", a=", a, ", b=", b, ")"
-        )
+        ylab = "Probability", xlab = "x"
       )
     }
-    do.call(graphics::barplot, c(args, list(...)))
+    if (is.null(dots$main)) args$main <- default_main
+    do.call(graphics::barplot, c(args, dots))
 
     return(invisible(list(
       x = if (compare) x_full else x_trunc,
@@ -113,16 +111,18 @@ plottruncpois <- function(lambda, a = 0L, b = Inf,
     x_cdf <- seq(0, qhi)
     y_trunc <- ptruncpois(x_cdf, lambda, a = a, b = b)
     y_untrunc <- if (compare) stats::ppois(x_cdf, lambda) else NULL
+    default_main <- paste0(
+      "CDF: TruncPois(lambda=", lambda,
+      ", a=", a, ", b=", b, ")"
+    )
 
-    plot(x_cdf, y_trunc,
+    plot_args <- list(x_cdf, y_trunc,
       type = "s", col = "steelblue", lwd = 2,
       xlim = c(0, max(x_cdf)),
-      ylim = c(0, 1), ylab = "Cumulative Probability", xlab = "x",
-      main = paste0(
-        "CDF: TruncPois(lambda=", lambda,
-        ", a=", a, ", b=", b, ")"
-      ), ...
+      ylim = c(0, 1), ylab = "Cumulative Probability", xlab = "x"
     )
+    if (is.null(dots$main)) plot_args$main <- default_main
+    do.call(plot, c(plot_args, dots))
     if (compare) {
       graphics::lines(x_cdf, y_untrunc,
         type = "s", col = "grey50",
@@ -148,15 +148,17 @@ plottruncpois <- function(lambda, a = 0L, b = Inf,
     y_trunc <- qtruncpois(p_grid, lambda, a = a, b = b)
     y_untrunc <- if (compare) stats::qpois(p_grid, lambda) else NULL
 
-    plot(p_grid, y_trunc,
+    default_main <- paste0(
+      "Quantile Function: TruncPois(lambda=", lambda,
+      ", a=", a, ", b=", b, ")"
+    )
+    plot_args <- list(p_grid, y_trunc,
       type = "s", col = "steelblue", lwd = 2,
       ylim = range(c(y_trunc, y_untrunc)),
-      ylab = "Quantile", xlab = "p",
-      main = paste0(
-        "Quantile Function: TruncPois(lambda=", lambda,
-        ", a=", a, ", b=", b, ")"
-      ), ...
+      ylab = "Quantile", xlab = "p"
     )
+    if (is.null(dots$main)) plot_args$main <- default_main
+    do.call(plot, c(plot_args, dots))
     if (compare) {
       graphics::lines(p_grid, y_untrunc,
         type = "s", col = "grey50",
